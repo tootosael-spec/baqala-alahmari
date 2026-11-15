@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123d2b">
+<title>لوحة إدارة بقالة الأحمري</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;--green:#123d2b;--mint:#eaf5ed;--muted:#758178}*{box-sizing:border-box}body{margin:0;background:#f4f7f4;color:#1d2a22;font-family:inherit}button,input,select{font:inherit}button{cursor:pointer}.top{background:linear-gradient(120deg,#123d2b,#246b45);color:white;padding:22px max(18px,calc((100% - 1120px)/2));display:flex;justify-content:space-between;align-items:center;gap:12px}.top h1{font-size:20px;margin:0}.top p{font-size:12px;color:#d0e5d7;margin:3px 0 0}.top a{color:white;text-decoration:none;border:1px solid #ffffff55;padding:9px 13px;border-radius:12px;font-size:13px}.wrap{max-width:1120px;margin:25px auto;padding:0 18px}.welcome{margin-bottom:20px}.welcome h2{margin:0;font-size:23px}.welcome p{margin:5px 0;color:var(--muted);font-size:13px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat,.card{background:white;border:1px solid #e7ede7;border-radius:18px;padding:17px;box-shadow:0 3px 14px #183b2208}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:24px;color:var(--green);margin-top:6px}.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:16px}.card h3{font-size:16px;margin:0 0 15px}.field{display:block;margin:11px 0}.field span{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#4c5b51}.field input,.field select{width:100%;height:43px;border:1px solid #dce5dc;border-radius:11px;padding:0 11px;background:white;outline:none}.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.btn{border:0;border-radius:11px;padding:11px 14px;font-size:13px;font-weight:700}.primary{background:var(--green);color:white}.light{background:var(--mint);color:var(--green)}.danger{background:#fff0ed;color:#ad382d}.full{width:100%}.hint{background:#fff8e8;border:1px solid #f0e2bf;color:#765c28;padding:11px;border-radius:12px;font-size:11px;line-height:1.8;margin-top:12px}.products{margin-top:16px}.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #edf1ed}.item:last-child{border:0}.item-main{display:flex;align-items:center;gap:10px;min-width:0}.thumb{width:48px;height:48px;border-radius:12px;background:#edf5ee;display:grid;place-items:center;overflow:hidden;font-size:24px;flex-shrink:0}.thumb img{width:100%;height:100%;object-fit:contain}.item-name{font-size:13px;font-weight:700}.item-meta{font-size:11px;color:var(--muted)}.actions{display:flex;gap:6px;flex-shrink:0}.actions button{padding:7px 9px;font-size:11px}.ai{border:1px dashed #98b9a1;border-radius:12px;padding:12px;background:#f6fbf6}.ai strong{font-size:13px}.ai p{font-size:11px;color:#69766d;line-height:1.7;margin:5px 0 10px}.disabled{opacity:.55;cursor:not-allowed}@media(max-width:760px){.layout{grid-template-columns:1fr}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:20px}.top{padding:18px}.wrap{margin:18px auto}}@media(max-width:390px){.row{display:block}}
+</style></head>
+<body>
+<header class="top"><div><h1>🛒 لوحة إدارة بقالة الأحمري</h1><p>إدارة المنتجات وإعدادات المتجر من مكان واحد</p></div><a href="index.html">عرض المتجر ↗</a></header>
+<main class="wrap">
+<section class="welcome"><h2>مرحباً بك في لوحة التحكم</h2><p>تابع منتجات متجرك وحدّث بياناته بسهولة.</p></section>
+<section class="stats"><div class="stat"><span>إجمالي المنتجات</span><strong id="statProducts">0</strong></div><div class="stat"><span>عدد الأقسام</span><strong id="statCats">0</strong></div><div class="stat"><span>حالة رقم واتساب</span><strong id="statWhatsapp" style="font-size:17px">غير مضاف</strong></div></section>
+<div class="layout">
+<section class="card"><h3>إضافة منتج جديد</h3>
+<label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
+<div class="row"><label class="field"><span>السعر (ريال)</span><input id="pPrice" type="number" min="0" step=".25" placeholder="5"></label><label class="field"><span>القسم</span><select id="pCategory"></select></label></div>
+<div class="row"><label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>رابط صورة المنتج (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label></div>
+<div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
+<button class="btn primary full" style="margin-top:14px" onclick="addProduct()">＋ إضافة المنتج</button>
+</section>
+<section class="card"><h3>إعدادات المتجر</h3>
+<label class="field"><span>اسم المتجر</span><input id="storeName" placeholder="بقالة الأحمري"></label>
+<label class="field"><span>رقم واتساب مع رمز الدولة</span><input id="storePhone" inputmode="tel" placeholder="9665xxxxxxxx"></label>
+<button class="btn primary full" onclick="saveSettings()">حفظ الإعدادات</button>
+<div class="hint">تنبيه مهم: هذه نسخة تجريبية، والبيانات محفوظة محلياً في المتصفح فقط. هذه الصفحة منفصلة عن واجهة الزبائن شكلياً، لكنها ليست محمية بتسجيل دخول بعد؛ لا تضع بيانات حساسة ولا تستخدمها للإدارة الفعلية قبل ربط قاعدة بيانات وصلاحيات آمنة.</div>
+</section>
+</div>
+<section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
+</main>
+<script>
+const categories=['الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
+const demo=[['حليب كامل الدسم','الألبان والأجبان',6,'🥛'],['لبن طازج','الألبان والأجبان',4,'🥛'],['عصير برتقال','المشروبات والعصائر',5,'🧃'],['مياه شرب','المشروبات والعصائر',1,'💧'],['خبز طازج','المخبوزات',2,'🍞'],['أرز 5 كيلو','المواد الغذائية',28,'🍚'],['شوكولاتة','الحلويات والشوكولاتة',3,'🍫'],['سائل غسيل','المنظفات',12,'🧴'],['موز','الخضار والفواكه',5,'🍌'],['فول معلب','المعلبات',4,'🥫']];
+let products=JSON.parse(localStorage.getItem('baqala_products')||'null')||demo.map((p,i)=>({id:i+1,name:p[0],category:p[1],price:p[2],emoji:p[3]}));
+let settings=JSON.parse(localStorage.getItem('baqala_settings')||'{}');
+const money=n=>Number(n).toFixed(2)+' ر.س';
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function persist(){localStorage.setItem('baqala_products',JSON.stringify(products));}
+function render(){
+document.getElementById('statProducts').textContent=products.length;
+document.getElementById('statCats').textContent=new Set(products.map(p=>p.category)).size;
+document.getElementById('statWhatsapp').textContent=settings.phone?'مضاف ✓':'غير مضاف';
+document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category)+' · '+money(p.price)+'</div></div></div><div class="actions"><button class="btn light" onclick="editProduct('+Number(p.id)+')">تعديل</button><button class="btn danger" onclick="removeProduct('+Number(p.id)+')">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+}
+function addProduct(){
+const name=document.getElementById('pName').value.trim(),price=Number(document.getElementById('pPrice').value),category=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageUrl=document.getElementById('pImage').value.trim();
+if(!name||document.getElementById('pPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
+if(imageUrl&&!/^https?:\/\//i.test(imageUrl)){alert('أدخل رابط صورة يبدأ بـ https:// أو http://');return;}
+products.push({id:Date.now(),name,price,category,emoji,imageUrl});persist();['pName','pPrice','pEmoji','pImage'].forEach(id=>document.getElementById(id).value='');render();
+}
+function editProduct(id){
+const p=products.find(x=>x.id===id);if(!p)return;
+const name=prompt('اسم المنتج',p.name);if(name===null)return;
+const price=prompt('السعر بالريال',p.price);if(price===null)return;
+const n=Number(price);if(!name.trim()||!Number.isFinite(n)||n<0){alert('الاسم أو السعر غير صحيح');return;}
+p.name=name.trim();p.price=n;persist();render();
+}
+function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;products=products.filter(p=>p.id!==id);persist();render();}
+function saveSettings(){
+settings={name:document.getElementById('storeName').value.trim()||'بقالة الأحمري',phone:document.getElementById('storePhone').value.replace(/\D/g,'')};
+localStorage.setItem('baqala_settings',JSON.stringify(settings));alert('تم حفظ الإعدادات');render();
+}
+document.getElementById('pCategory').innerHTML=categories.map(c=>'<option>'+c+'</option>').join('');
+document.getElementById('storeName').value=settings.name||'بقالة الأحمري';document.getElementById('storePhone').value=settings.phone||'';
+render();
+</script></body></html>
