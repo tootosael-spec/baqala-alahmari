@@ -54,7 +54,8 @@ async function loadData(){
  document.getElementById('storePhone').value=settings.whatsapp_number||'';
  document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
  document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+money(p.price)+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
- document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));\n document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
+ document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle))); 
+ document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
 }
 async function enterAdmin(session){
