@@ -10,59 +10,90 @@
 </style></head>
 <body>
 <header class="top"><div><h1>🛒 لوحة إدارة بقالة الأحمري</h1><p>إدارة المنتجات وإعدادات المتجر من مكان واحد</p></div><a href="index.html">عرض المتجر ↗</a></header>
-<main class="wrap">
-<section class="welcome"><h2>مرحباً بك في لوحة التحكم</h2><p>تابع منتجات متجرك وحدّث بياناته بسهولة.</p></section>
+<section id="authGate" class="card" style="max-width:430px;margin:50px auto"><h2 style="margin-top:0">تسجيل دخول الإدارة</h2><p style="font-size:13px;color:#758178">أدخل بريد وكلمة مرور حساب صاحب البقالة.</p><form id="loginForm"><label class="field"><span>البريد الإلكتروني</span><input id="loginEmail" type="email" required autocomplete="username"></label><label class="field"><span>كلمة المرور</span><input id="loginPassword" type="password" required autocomplete="current-password"></label><button id="loginButton" class="btn primary full" type="submit">دخول لوحة الإدارة</button></form><p id="authMessage" class="hint" style="display:none"></p><p style="font-size:11px;color:#758178;margin-bottom:0">يجب تفعيل صلاحية صاحب المتجر للحساب قبل الدخول.</p></section><main id="adminApp" class="wrap" style="display:none">
+<section class="welcome" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><h2>مرحباً بك في لوحة التحكم</h2><p>تابع منتجات متجرك وحدّث بياناته بسهولة.</p></div><button id="logoutButton" class="btn light">تسجيل الخروج</button></section>
 <section class="stats"><div class="stat"><span>إجمالي المنتجات</span><strong id="statProducts">0</strong></div><div class="stat"><span>عدد الأقسام</span><strong id="statCats">0</strong></div><div class="stat"><span>حالة رقم واتساب</span><strong id="statWhatsapp" style="font-size:17px">غير مضاف</strong></div></section>
 <div class="layout">
-<section class="card"><h3>إضافة منتج جديد</h3>
+<section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
 <div class="row"><label class="field"><span>السعر (ريال)</span><input id="pPrice" type="number" min="0" step=".25" placeholder="5"></label><label class="field"><span>القسم</span><select id="pCategory"></select></label></div>
 <div class="row"><label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>رابط صورة المنتج (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label></div>
 <div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
-<button class="btn primary full" style="margin-top:14px" onclick="addProduct()">＋ إضافة المنتج</button>
+<button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
 </section>
-<section class="card"><h3>إعدادات المتجر</h3>
+<section class="card"><h3>إعدادات المتجر</h3><form id="settingsForm">
 <label class="field"><span>اسم المتجر</span><input id="storeName" placeholder="بقالة الأحمري"></label>
 <label class="field"><span>رقم واتساب مع رمز الدولة</span><input id="storePhone" inputmode="tel" placeholder="9665xxxxxxxx"></label>
-<button class="btn primary full" onclick="saveSettings()">حفظ الإعدادات</button>
+<button class="btn primary full" type="submit">حفظ الإعدادات</button></form>
 <div class="hint">تنبيه مهم: هذه نسخة تجريبية، والبيانات محفوظة محلياً في المتصفح فقط. هذه الصفحة منفصلة عن واجهة الزبائن شكلياً، لكنها ليست محمية بتسجيل دخول بعد؛ لا تضع بيانات حساسة ولا تستخدمها للإدارة الفعلية قبل ربط قاعدة بيانات وصلاحيات آمنة.</div>
 </section>
 </div>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
-<script>
-const categories=['الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
-const demo=[['حليب كامل الدسم','الألبان والأجبان',6,'🥛'],['لبن طازج','الألبان والأجبان',4,'🥛'],['عصير برتقال','المشروبات والعصائر',5,'🧃'],['مياه شرب','المشروبات والعصائر',1,'💧'],['خبز طازج','المخبوزات',2,'🍞'],['أرز 5 كيلو','المواد الغذائية',28,'🍚'],['شوكولاتة','الحلويات والشوكولاتة',3,'🍫'],['سائل غسيل','المنظفات',12,'🧴'],['موز','الخضار والفواكه',5,'🍌'],['فول معلب','المعلبات',4,'🥫']];
-let products=JSON.parse(localStorage.getItem('baqala_products')||'null')||demo.map((p,i)=>({id:i+1,name:p[0],category:p[1],price:p[2],emoji:p[3]}));
-let settings=JSON.parse(localStorage.getItem('baqala_settings')||'{}');
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
+const categoriesFallback=['الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
+let products=[],categories=[],settings={};
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function persist(){localStorage.setItem('baqala_products',JSON.stringify(products));}
-function render(){
-document.getElementById('statProducts').textContent=products.length;
-document.getElementById('statCats').textContent=new Set(products.map(p=>p.category)).size;
-document.getElementById('statWhatsapp').textContent=settings.phone?'مضاف ✓':'غير مضاف';
-document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category)+' · '+money(p.price)+'</div></div></div><div class="actions"><button class="btn light" onclick="editProduct('+Number(p.id)+')">تعديل</button><button class="btn danger" onclick="removeProduct('+Number(p.id)+')">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
+async function loadData(){
+ const [p,c,s]=await Promise.all([
+  supabase.from('store_products').select('id,name,price,emoji,image_url,category_id,category:store_categories(name)').order('sort_order').order('name'),
+  supabase.from('store_categories').select('id,name').order('sort_order'),
+  supabase.from('store_settings').select('*').eq('id',1).single()
+ ]);
+ const error=p.error||c.error||s.error;if(error)throw error;
+ products=p.data||[];categories=c.data||[];settings=s.data||{};
+ document.getElementById('statProducts').textContent=products.length;
+ document.getElementById('statCats').textContent=categories.length;
+ document.getElementById('statWhatsapp').textContent=settings.whatsapp_number?'مضاف ✓':'غير مضاف';
+ document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
+ document.getElementById('storePhone').value=settings.whatsapp_number||'';
+ document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
+ document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+money(p.price)+'</div></div></div><div class="actions"><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+ document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
+ document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
 }
-function addProduct(){
-const name=document.getElementById('pName').value.trim(),price=Number(document.getElementById('pPrice').value),category=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageUrl=document.getElementById('pImage').value.trim();
-if(!name||document.getElementById('pPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
-if(imageUrl&&!/^https?:\/\//i.test(imageUrl)){alert('أدخل رابط صورة يبدأ بـ https:// أو http://');return;}
-products.push({id:Date.now(),name,price,category,emoji,imageUrl});persist();['pName','pPrice','pEmoji','pImage'].forEach(id=>document.getElementById(id).value='');render();
+async function enterAdmin(session){
+ const role=session?.user?.app_metadata?.role;
+ if(role!=='store_admin'){await supabase.auth.signOut();showMessage('هذا الحساب غير مخوّل لإدارة المتجر. أرسل بريد الحساب للمسؤول لتفعيله.');return;}
+ document.getElementById('authGate').style.display='none';document.getElementById('adminApp').style.display='block';
+ try{await loadData();}catch(e){alert('تعذر تحميل بيانات الإدارة: '+e.message);}
 }
-function editProduct(id){
-const p=products.find(x=>x.id===id);if(!p)return;
-const name=prompt('اسم المنتج',p.name);if(name===null)return;
-const price=prompt('السعر بالريال',p.price);if(price===null)return;
-const n=Number(price);if(!name.trim()||!Number.isFinite(n)||n<0){alert('الاسم أو السعر غير صحيح');return;}
-p.name=name.trim();p.price=n;persist();render();
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
+ const btn=document.getElementById('loginButton');btn.disabled=true;btn.textContent='جارٍ الدخول...';
+ const {data,error}=await supabase.auth.signInWithPassword({email,password});
+ btn.disabled=false;btn.textContent='دخول لوحة الإدارة';
+ if(error){showMessage('تعذر تسجيل الدخول: '+error.message);return;}
+ await enterAdmin(data.session);
+});
+const {data:{session}}=await supabase.auth.getSession();if(session)await enterAdmin(session);
+supabase.auth.onAuthStateChange((_event,session)=>{if(!session){document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}});
+document.getElementById('logoutButton').addEventListener('click',()=>supabase.auth.signOut());
+document.getElementById('addProductForm').addEventListener('submit',async e=>{
+ e.preventDefault();const name=document.getElementById('pName').value.trim(),price=Number(document.getElementById('pPrice').value),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',image_url=document.getElementById('pImage').value.trim();
+ if(!name||document.getElementById('pPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
+ if(image_url&&!/^https?:\/\//i.test(image_url)){alert('أدخل رابط صورة صحيحاً');return;}
+ const {error}=await supabase.from('store_products').insert({name,price,category_id,emoji,image_url:image_url||null});
+ if(error){alert('تعذر إضافة المنتج: '+error.message);return;}
+ e.target.reset();await loadData();
+});
+document.getElementById('settingsForm').addEventListener('submit',async e=>{
+ e.preventDefault();const store_name=document.getElementById('storeName').value.trim()||'بقالة الأحمري',whatsapp_number=document.getElementById('storePhone').value.replace(/\D/g,'')||null;
+ const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,updated_at:new Date().toISOString()}).eq('id',1);
+ if(error){alert('تعذر حفظ الإعدادات: '+error.message);return;}alert('تم حفظ الإعدادات');await loadData();
+});
+async function editProduct(id){
+ const p=products.find(x=>x.id===id);if(!p)return;
+ const name=prompt('اسم المنتج',p.name);if(name===null)return;
+ const price=prompt('السعر بالريال',p.price);if(price===null)return;
+ const n=Number(price);if(!name.trim()||!Number.isFinite(n)||n<0){alert('الاسم أو السعر غير صحيح');return;}
+ const {error}=await supabase.from('store_products').update({name:name.trim(),price:n,updated_at:new Date().toISOString()}).eq('id',id);
+ if(error){alert('تعذر تعديل المنتج: '+error.message);return;}await loadData();
 }
-function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;products=products.filter(p=>p.id!==id);persist();render();}
-function saveSettings(){
-settings={name:document.getElementById('storeName').value.trim()||'بقالة الأحمري',phone:document.getElementById('storePhone').value.replace(/\D/g,'')};
-localStorage.setItem('baqala_settings',JSON.stringify(settings));alert('تم حفظ الإعدادات');render();
-}
-document.getElementById('pCategory').innerHTML=categories.map(c=>'<option>'+c+'</option>').join('');
-document.getElementById('storeName').value=settings.name||'بقالة الأحمري';document.getElementById('storePhone').value=settings.phone||'';
-render();
+async function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;const {error}=await supabase.from('store_products').delete().eq('id',id);if(error){alert('تعذر حذف المنتج: '+error.message);return;}await loadData();}
 </script></body></html>
