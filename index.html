@@ -104,7 +104,7 @@
           <div class="brand-mark">🛒</div>
           <div><h1 id="storeTitle">بقالة الأحمري</h1><p>كل احتياجات البيت في مكان واحد</p></div>
         </div>
-        <button class="admin-trigger" onclick="openAdmin()">⚙ إدارة المتجر</button>
+        <a class="admin-trigger" href="admin.html" style="text-decoration:none">دخول الإدارة ↗</a>
       </div>
       <div class="hero">
         <span class="eyebrow">🌿 تسوّق أسهل، ويوم أريح</span>
@@ -144,28 +144,6 @@
     </div>
   </div>
 
-  <div id="adminModal" class="modal" onclick="if(event.target===this)closeModal('adminModal')">
-    <div class="panel">
-      <div class="panel-head"><h2>إدارة المتجر</h2><button class="close-btn" onclick="closeModal('adminModal')">✕</button></div>
-      <label class="field"><span>اسم المتجر</span><input id="adminName" placeholder="بقالة الأحمري"></label>
-      <label class="field"><span>رقم واتساب مع رمز الدولة (مثال: 9665xxxxxxxx)</span><input id="adminPhone" inputmode="tel" placeholder="أدخل رقم واتساب البقالة"></label>
-      <button class="action-btn primary-btn" onclick="saveSettings()">حفظ الإعدادات</button>
-      <div class="divider-label">إضافة منتج جديد</div>
-      <div class="form-row">
-        <label class="field"><span>اسم المنتج</span><input id="newName" placeholder="مثال: حليب"></label>
-        <label class="field"><span>السعر (ريال)</span><input id="newPrice" type="number" min="0" step=".25" placeholder="5"></label>
-      </div>
-      <div class="form-row">
-        <label class="field"><span>القسم</span><select id="newCategory"></select></label>
-        <label class="field"><span>رمز المنتج</span><input id="newEmoji" placeholder="🥛" maxlength="4"></label>
-      </div>
-      <button class="action-btn primary-btn" onclick="addProduct()">＋ إضافة المنتج</button>
-      <div class="divider-label">المنتجات الحالية</div>
-      <div id="adminProducts"></div>
-      <p class="note">تنبيه: هذه نسخة تجريبية تحفظ البيانات على هذا الجهاز والمتصفح فقط. لوحة الإدارة غير محمية بكلمة مرور؛ يلزم ربط قاعدة بيانات وتسجيل دخول قبل استخدامها لإدارة متجر فعلي.</p>
-    </div>
-  </div>
-
   <div id="cartModal" class="modal" onclick="if(event.target===this)closeModal('cartModal')">
     <div class="panel">
       <div class="panel-head"><h2>سلة مشترياتك 🛍️</h2><button class="close-btn" onclick="closeModal('cartModal')">✕</button></div>
@@ -193,7 +171,7 @@ function renderProducts(){
   const q=document.getElementById('search').value.trim().toLowerCase();
   const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));
   document.getElementById('productCount').textContent=list.length+' منتج';
-  document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+esc(p.emoji||'🛍️')+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+'</strong><button class="add-btn" onclick="addCart('+Number(p.id)+')">＋ أضف</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';
+  document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji||'🛍️'))+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+'</strong><button class="add-btn" onclick="addCart('+Number(p.id)+')">＋ أضف</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';
 }
 function addCart(id){cart[id]=(cart[id]||0)+1;persist();renderCartSummary();}
 function total(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0);}
@@ -210,33 +188,6 @@ function renderCart(){
   document.getElementById('modalTotal').textContent=money(total());
 }
 function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];persist();renderCart();renderCartSummary();}
-function openAdmin(){
-  document.getElementById('adminName').value=settings.name||'بقالة الأحمري';
-  document.getElementById('adminPhone').value=settings.phone||'';
-  document.getElementById('newCategory').innerHTML=cats.slice(1).map(c=>'<option>'+c+'</option>').join('');
-  renderAdminProducts();document.getElementById('adminModal').style.display='block';
-}
-function closeModal(id){document.getElementById(id).style.display='none';}
-function saveSettings(){
-  settings={name:document.getElementById('adminName').value.trim()||'بقالة الأحمري',phone:document.getElementById('adminPhone').value.replace(/\D/g,'')};
-  localStorage.setItem('baqala_settings',JSON.stringify(settings));
-  document.getElementById('storeTitle').textContent=settings.name;
-  alert('تم حفظ الإعدادات');
-}
-function addProduct(){
-  const name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value),category=document.getElementById('newCategory').value,emoji=document.getElementById('newEmoji').value.trim()||'🛍️';
-  if(!name||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
-  products.push({id:Date.now(),name,price,category,emoji});persist();
-  document.getElementById('newName').value='';document.getElementById('newPrice').value='';document.getElementById('newEmoji').value='';
-  renderAdminProducts();renderProducts();
-}
-function renderAdminProducts(){
-  document.getElementById('adminProducts').innerHTML=products.map(p=>'<div class="line-item"><span>'+esc(p.emoji)+' '+esc(p.name)+' <small class="muted">'+money(p.price)+'</small></span><button class="action-btn danger-btn" onclick="removeProduct('+Number(p.id)+')">حذف</button></div>').join('')||'<p class="muted">لا توجد منتجات.</p>';
-}
-function removeProduct(id){
-  if(!confirm('حذف هذا المنتج؟'))return;
-  products=products.filter(p=>p.id!==id);delete cart[id];persist();renderAdminProducts();renderProducts();renderCartSummary();
-}
 function sendOrder(){
   const list=products.filter(p=>cart[p.id]);
   if(!list.length){alert('السلة فارغة');return;}
