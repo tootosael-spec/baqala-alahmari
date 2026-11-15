@@ -16,7 +16,7 @@
 <div class="layout">
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
-<div class="row"><label class="field"><span>السعر (ريال)</span><input id="pPrice" type="number" min="0" step=".25" placeholder="5"></label><label class="field"><span>القسم</span><select id="pCategory"></select></label></div>
+<div class="row"><label class="field"><span>السعر (ريال)</span><input id="pPrice" type="number" min="0" step=".25" placeholder="5"></label><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><label class="field"><span>وحدة المنتج</span><select id="pUnit"><option value="حبة">حبة</option><option value="كيلو">كيلو</option><option value="جرام">جرام</option><option value="لتر">لتر</option><option value="كرتون">كرتون</option><option value="علبة">علبة</option><option value="كيس">كيس</option><option value="باكيت">باكيت</option><option value="ربطة">ربطة</option><option value="صندوق">صندوق</option></select></label>
 <label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" capture="environment" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
 <div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
@@ -41,7 +41,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
  const [p,c,s]=await Promise.all([
-  supabase.from('store_products').select('id,name,price,emoji,image_url,is_active,category_id,category:store_categories(name)').order('sort_order').order('name'),
+  supabase.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,category:store_categories(name)').order('sort_order').order('name'),
   supabase.from('store_categories').select('id,name').order('sort_order'),
   supabase.from('store_settings').select('*').eq('id',1).single()
  ]);
@@ -53,7 +53,7 @@ async function loadData(){
  document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
  document.getElementById('storePhone').value=settings.whatsapp_number||'';
  document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
- document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+money(p.price)+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+ document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+money(p.price)+' / '+esc(p.unit||'حبة')+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle))); 
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
@@ -77,7 +77,7 @@ supabase.auth.onAuthStateChange((_event,session)=>{if(!session){document.getElem
 document.getElementById('logoutButton').addEventListener('click',()=>supabase.auth.signOut());
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
- const name=document.getElementById('pName').value.trim(),price=Number(document.getElementById('pPrice').value),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
+ const name=document.getElementById('pName').value.trim(),price=Number(document.getElementById('pPrice').value),category_id=document.getElementById('pCategory').value,unit=document.getElementById('pUnit').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
  if(!name||document.getElementById('pPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
  if(manualImage&&!/^https?:\/\//i.test(manualImage)){alert('أدخل رابط صورة صحيحاً');return;}
  if(imageFile&&(!imageFile.type.startsWith('image/')||imageFile.size>5*1024*1024)){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');return;}
@@ -90,7 +90,7 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
   if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع الصورة: '+uploadError.message);return;}
   image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
  }
- const {error}=await supabase.from('store_products').insert({name,price,category_id,emoji,image_url,is_active:true});
+ const {error}=await supabase.from('store_products').insert({name,price,unit,category_id,emoji,image_url,is_active:true});
  if(error){alert('تعذر إضافة المنتج: '+error.message);return;}
  e.target.reset();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال.';await loadData();
 });
@@ -103,8 +103,9 @@ async function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const name=prompt('اسم المنتج',p.name);if(name===null)return;
  const price=prompt('السعر بالريال',p.price);if(price===null)return;
+ const unit=prompt('وحدة المنتج (حبة، كيلو، كرتون...)',p.unit||'حبة');if(unit===null)return;
  const n=Number(price);if(!name.trim()||!Number.isFinite(n)||n<0){alert('الاسم أو السعر غير صحيح');return;}
- const {error}=await supabase.from('store_products').update({name:name.trim(),price:n,updated_at:new Date().toISOString()}).eq('id',id);
+ const {error}=await supabase.from('store_products').update({name:name.trim(),price:n,unit:unit.trim()||'حبة',updated_at:new Date().toISOString()}).eq('id',id);
  if(error){alert('تعذر تعديل المنتج: '+error.message);return;}await loadData();
 }
 async function toggleProduct(id){
