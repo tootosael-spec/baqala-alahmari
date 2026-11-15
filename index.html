@@ -1,40 +1,253 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#16764a"><title>بقالة الأحمري</title>
-<style>
-:root{--green:#16764a;--dark:#12402e;--bg:#f5f7f4;--muted:#6b756f;--line:#e5eae5}*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:#202923}button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:12px;padding:11px 15px;font-weight:700}.top{background:linear-gradient(120deg,#0f5c3a,#22965e);color:white;padding:22px 16px 26px}.wrap{max-width:1050px;margin:auto;padding:0 14px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:11px}.logo{width:48px;height:48px;background:#ffffff24;border-radius:15px;display:grid;place-items:center;font-size:27px}.brand h1{font-size:21px;margin:0 0 4px}.brand p{margin:0;color:#d9f1e2;font-size:12px}.admin{background:#ffffff20;color:white;border:1px solid #ffffff55}.search{margin-top:20px;width:100%;padding:14px 16px;border:0;border-radius:13px;outline:none}.section-title{font-size:18px;margin:23px 0 12px}.categories{display:flex;gap:8px;overflow:auto;padding:2px 0 8px}.cat{white-space:nowrap;background:white;color:#34443a;border:1px solid var(--line)}.cat.active{background:var(--green);color:white}.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}.product{background:white;border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;min-height:188px}.emoji{height:72px;display:grid;place-items:center;font-size:43px;background:#f2f7f1;border-radius:12px;margin-bottom:10px}.product h3{font-size:14px;margin:0 0 6px}.price{font-weight:800;color:var(--green);margin-top:auto;margin-bottom:10px}.add{background:var(--green);color:white;width:100%}.empty{padding:30px;text-align:center;color:var(--muted);background:white;border-radius:14px}.bottom{position:sticky;bottom:0;background:#ffffffed;border-top:1px solid var(--line);padding:12px;margin-top:24px;backdrop-filter:blur(8px)}.bottom-in{max-width:1050px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.cart-btn{background:#202923;color:white}.muted{color:var(--muted);font-size:12px}.modal{display:none;position:fixed;inset:0;background:#101a15a8;z-index:5;padding:16px;overflow:auto}.panel{background:white;max-width:540px;margin:30px auto;border-radius:18px;padding:18px}.panel-head{display:flex;justify-content:space-between;align-items:center}.panel h2{font-size:19px;margin:0}.close{background:#edf1ed}.field{display:block;margin:13px 0}.field span{display:block;font-size:13px;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #dce4dc;border-radius:10px;background:white}.row{display:flex;gap:8px}.row>*{flex:1}.item-line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:10px 0;gap:10px}.qty button{padding:5px 10px;background:#edf4ee}.danger{background:#fff0ed;color:#b83224}.secondary{background:#edf3ee;color:#244b35}.primary{background:var(--green);color:white}.note{background:#fff8e8;border:1px solid #f0dfb4;border-radius:10px;padding:10px;font-size:12px;color:#72551a;line-height:1.7}@media(min-width:700px){.top{padding-top:28px}.products{grid-template-columns:repeat(auto-fill,minmax(175px,1fr))}}
-</style></head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
+  <meta name="description" content="تسوق احتياجاتك اليومية من بقالة الأحمري بسهولة، وأرسل طلبك مباشرة عبر واتساب.">
+  <title>بقالة الأحمري | تسوق يومك</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;color-scheme:light;--forest:#123d2b;--leaf:#238653;--mint:#eaf5ed;--ink:#18251e;--muted:#728078}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f5f7f4;color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;padding-bottom:100px}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .site-header{background:radial-gradient(ellipse at 85% 5%,#2d8052 0,transparent 38%),linear-gradient(135deg,#123d2b,#0c2e21);color:white;overflow:hidden}
+    .header-inner{max-width:1180px;margin:auto;padding:20px 20px 34px}
+    .nav-line{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-mark{width:50px;height:50px;border-radius:17px;background:#ffffff1c;border:1px solid #ffffff2b;display:grid;place-items:center;font-size:27px}
+    .brand h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.4px}
+    .brand p{font-size:12px;color:#c9dfd1;margin:2px 0 0}
+    .admin-trigger{border:1px solid #ffffff45;background:#ffffff12;color:white;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:600}
+    .admin-trigger:hover{background:#ffffff25}
+    .hero{padding:34px 0 18px;max-width:720px}
+    .eyebrow{display:inline-flex;align-items:center;gap:7px;background:#ffffff17;border:1px solid #ffffff25;color:#d9f2e2;padding:6px 11px;border-radius:999px;font-size:12px}
+    .hero h2{font-size:clamp(27px,5vw,42px);line-height:1.35;letter-spacing:-1px;margin:13px 0 8px;font-weight:700}
+    .hero h2 span{color:#a9e7bd}
+    .hero p{color:#d2e5d8;font-size:14px;margin:0}
+    .search-wrap{position:relative;margin-top:24px;max-width:620px}
+    .search-wrap .search-icon{position:absolute;right:17px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.65}
+    .search-input{width:100%;height:54px;border:1px solid #ffffff30;border-radius:17px;background:white;color:#203128;padding:0 48px 0 16px;outline:none;box-shadow:0 10px 30px #061b122b}
+    .search-input:focus{box-shadow:0 0 0 4px #a9e7bd55}
+    .page-wrap{max-width:1180px;margin:auto;padding:0 20px}
+    .section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:28px 0 13px}
+    .section-head h2{font-size:19px;font-weight:700;margin:0;letter-spacing:-.3px}
+    .section-head p{font-size:12px;color:var(--muted);margin:3px 0 0}
+    .categories{display:flex;gap:9px;overflow-x:auto;padding:2px 1px 10px;scrollbar-width:none}
+    .categories::-webkit-scrollbar{display:none}
+    .category-chip{white-space:nowrap;border:1px solid #e4eae4;background:white;color:#46544b;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;transition:.18s}
+    .category-chip.active,.category-chip:hover{background:var(--forest);border-color:var(--forest);color:white;box-shadow:0 5px 14px #123d2b20}
+    .products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .product-card{background:white;border:1px solid #e9eee9;border-radius:20px;padding:11px;display:flex;flex-direction:column;min-width:0;box-shadow:0 3px 12px #1b302008;transition:transform .18s,box-shadow .18s}
+    .product-card:hover{transform:translateY(-3px);box-shadow:0 12px 25px #1b302012}
+    .product-art{height:112px;border-radius:15px;background:linear-gradient(145deg,#f2f8f2,#e8f2e9);display:grid;place-items:center;font-size:53px;margin-bottom:12px;position:relative;overflow:hidden}
+    .product-art:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:#ffffff70;left:-35px;bottom:-48px}
+    .product-name{font-size:14px;font-weight:700;line-height:1.5;margin:0 0 3px;min-height:22px}
+    .product-category{font-size:11px;color:#89948d;margin:0 0 12px}
+    .product-foot{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:auto}
+    .product-price{font-size:14px;font-weight:700;color:#176b40;white-space:nowrap}
+    .add-btn{border:0;border-radius:12px;background:#eaf5ed;color:#176b40;font-size:12px;font-weight:700;padding:9px 11px;white-space:nowrap}
+    .add-btn:hover{background:#d7eddd}
+    .empty-state{grid-column:1/-1;background:white;border:1px dashed #d6e1d7;border-radius:18px;padding:36px 15px;text-align:center;color:var(--muted)}
+    .empty-state .empty-icon{font-size:34px;margin-bottom:8px}
+    .trust-strip{display:flex;flex-wrap:wrap;gap:10px 18px;margin:25px 0 30px;color:#6d7b72;font-size:12px}
+    .trust-strip span{display:flex;align-items:center;gap:6px}
+    .cart-dock{position:fixed;z-index:4;bottom:0;right:0;left:0;background:#ffffffed;border-top:1px solid #e6ece6;backdrop-filter:blur(14px);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+    .cart-dock-inner{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .cart-info small{display:block;color:var(--muted);font-size:11px}
+    .cart-info strong{font-size:17px;color:var(--forest)}
+    .cart-open{background:var(--forest);color:white;border:0;border-radius:15px;padding:13px 17px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 6px 15px #123d2b25}
+    .cart-open:hover{background:#1c5b3d}
+    .cart-count{background:#ffffff24;border-radius:999px;padding:2px 7px;font-size:11px}
+    .modal{display:none;position:fixed;inset:0;z-index:10;background:#101b15a8;padding:16px;overflow:auto;backdrop-filter:blur(3px)}
+    .panel{background:#fff;max-width:570px;width:100%;margin:25px auto;border-radius:24px;padding:20px;box-shadow:0 24px 80px #0003}
+    .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .panel-head h2{font-size:19px;font-weight:700;margin:0}
+    .close-btn{width:36px;height:36px;border:0;border-radius:12px;background:#f0f4f0;color:#435248;font-size:17px}
+    .field{display:block;margin:13px 0}
+    .field span{display:block;font-size:12px;font-weight:600;color:#4d5b52;margin-bottom:6px}
+    .field input,.field select{width:100%;height:44px;padding:0 12px;border:1px solid #dce5dc;border-radius:12px;background:white;outline:none}
+    .field input:focus,.field select:focus{border-color:#32945b;box-shadow:0 0 0 3px #32945b1a}
+    .form-row{display:flex;gap:10px}
+    .form-row>*{flex:1;min-width:0}
+    .action-btn{border:0;border-radius:12px;padding:11px 15px;font-size:13px;font-weight:700}
+    .primary-btn{background:var(--forest);color:white}
+    .soft-btn{background:#edf4ee;color:#28553a}
+    .danger-btn{background:#fff0ed;color:#b83b2e}
+    .line-item{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf0ed;padding:12px 0;gap:10px}
+    .line-item:last-child{border-bottom:0}
+    .qty-control{display:flex;align-items:center;gap:9px;white-space:nowrap}
+    .qty-control button{width:29px;height:29px;border:0;border-radius:9px;background:#edf4ee;color:#24573a;font-weight:700}
+    .line-sub{font-size:11px;color:#87928a;margin-top:3px}
+    .note{background:#fff8e9;border:1px solid #f2e2bd;border-radius:13px;padding:11px;font-size:11px;color:#765a20;line-height:1.8;margin-top:18px}
+    .divider-label{font-size:14px;font-weight:700;margin:22px 0 8px}
+    .total-row{display:flex;justify-content:space-between;align-items:center;padding:15px 0;font-weight:700}
+    .send-btn{width:100%;height:49px;background:#159b58;color:white;border:0;border-radius:14px;font-weight:700}
+    .send-btn:hover{background:#10834a}
+    .muted{font-size:11px;color:#89948d}
+    @media(min-width:620px){.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product-card{padding:13px}.product-art{height:145px;font-size:62px}.product-name{font-size:15px}}
+    @media(min-width:900px){.products{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.header-inner{padding-bottom:42px}.hero{padding-top:42px}.product-art{height:155px}}
+    @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.brand-mark{width:44px;height:44px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
+  </style>
+</head>
 <body>
-<header class="top"><div class="wrap"><div class="head"><div class="brand"><div class="logo">🛒</div><div><h1 id="storeTitle">بقالة الأحمري</h1><p>احتياجاتك اليومية توصلك بسهولة</p></div></div><button class="admin" onclick="openAdmin()">⚙ إدارة المتجر</button></div><input id="search" class="search" placeholder="ابحث عن منتج..." oninput="renderProducts()"></div></header>
-<main class="wrap"><h2 class="section-title">تسوق حسب القسم</h2><div id="categories" class="categories"></div><h2 class="section-title">المنتجات</h2><div id="products" class="products"></div></main>
-<div class="bottom"><div class="bottom-in"><div><strong id="cartTotal">0.00 ر.س</strong><div class="muted" id="cartCount">0 منتجات في السلة</div></div><button class="cart-btn" onclick="openCart()">عرض السلة وإرسال الطلب 🛍️</button></div></div>
-<div id="adminModal" class="modal"><div class="panel"><div class="panel-head"><h2>إدارة المتجر</h2><button class="close" onclick="closeModal('adminModal')">✕</button></div><label class="field"><span>اسم المتجر</span><input id="adminName"></label><label class="field"><span>رقم واتساب مع رمز الدولة (مثال: 9665xxxxxxxx)</span><input id="adminPhone" inputmode="tel" placeholder="أدخل رقم واتساب البقالة"></label><button class="primary" onclick="saveSettings()">حفظ الإعدادات</button><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>إضافة منتج</h3><div class="row"><label class="field"><span>اسم المنتج</span><input id="newName" placeholder="مثال: حليب"></label><label class="field"><span>السعر (ريال)</span><input id="newPrice" type="number" min="0" step=".25" placeholder="5"></label></div><div class="row"><label class="field"><span>القسم</span><select id="newCategory"></select></label><label class="field"><span>رمز المنتج</span><input id="newEmoji" placeholder="🥛" maxlength="4"></label></div><button class="primary" onclick="addProduct()">إضافة المنتج</button><h3 style="margin-top:22px">المنتجات الحالية</h3><div id="adminProducts"></div><p class="note">هذه نسخة تجريبية تحفظ البيانات على هذا الجهاز والمتصفح فقط. لوحة الإدارة غير محمية بكلمة مرور؛ لا تستخدمها لإدارة متجر منشور فعلياً قبل إضافة قاعدة بيانات وتسجيل دخول.</p></div></div>
-<div id="cartModal" class="modal"><div class="panel"><div class="panel-head"><h2>سلة المشتريات</h2><button class="close" onclick="closeModal('cartModal')">✕</button></div><div id="cartItems"></div><div class="item-line"><strong>الإجمالي</strong><strong id="modalTotal">0.00 ر.س</strong></div><label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" placeholder="أي تفاصيل إضافية"></label><button class="primary" style="width:100%" onclick="sendOrder()">إرسال الطلب عبر واتساب</button><p class="muted">سيتم فتح واتساب برسالة تحتوي تفاصيل طلبك.</p></div></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="nav-line">
+        <div class="brand">
+          <div class="brand-mark">🛒</div>
+          <div><h1 id="storeTitle">بقالة الأحمري</h1><p>كل احتياجات البيت في مكان واحد</p></div>
+        </div>
+        <button class="admin-trigger" onclick="openAdmin()">⚙ إدارة المتجر</button>
+      </div>
+      <div class="hero">
+        <span class="eyebrow">🌿 تسوّق أسهل، ويوم أريح</span>
+        <h2>أهلاً بك في <span>بقالة الأحمري</span></h2>
+        <p>اكتشف احتياجاتك اليومية، أضفها إلى سلتك وأرسل طلبك مباشرة.</p>
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="search" class="search-input" type="search" placeholder="وش تحتاج اليوم؟ ابحث عن منتج..." oninput="renderProducts()">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section>
+      <div class="section-head">
+        <div><h2>تسوّق حسب القسم</h2><p>اختر القسم للوصول لاحتياجك بسرعة</p></div>
+      </div>
+      <div id="categories" class="categories"></div>
+    </section>
+    <section>
+      <div class="section-head">
+        <div><h2>منتجاتنا</h2><p id="productCount">منتجات مختارة لك</p></div>
+        <span class="badge badge-outline badge-success">طازج يومياً</span>
+      </div>
+      <div id="products" class="products"></div>
+    </section>
+    <div class="trust-strip">
+      <span>✓ طلب سهل وسريع</span><span>✓ تواصل مباشر عبر واتساب</span><span>✓ أسعار واضحة قبل الإرسال</span>
+    </div>
+  </main>
+
+  <div class="cart-dock">
+    <div class="cart-dock-inner">
+      <div class="cart-info"><small id="cartCount">0 منتجات في السلة</small><strong id="cartTotal">0.00 ر.س</strong></div>
+      <button class="cart-open" onclick="openCart()">عرض السلة <span class="cart-count" id="cartBadge">0</span> <span>←</span></button>
+    </div>
+  </div>
+
+  <div id="adminModal" class="modal" onclick="if(event.target===this)closeModal('adminModal')">
+    <div class="panel">
+      <div class="panel-head"><h2>إدارة المتجر</h2><button class="close-btn" onclick="closeModal('adminModal')">✕</button></div>
+      <label class="field"><span>اسم المتجر</span><input id="adminName" placeholder="بقالة الأحمري"></label>
+      <label class="field"><span>رقم واتساب مع رمز الدولة (مثال: 9665xxxxxxxx)</span><input id="adminPhone" inputmode="tel" placeholder="أدخل رقم واتساب البقالة"></label>
+      <button class="action-btn primary-btn" onclick="saveSettings()">حفظ الإعدادات</button>
+      <div class="divider-label">إضافة منتج جديد</div>
+      <div class="form-row">
+        <label class="field"><span>اسم المنتج</span><input id="newName" placeholder="مثال: حليب"></label>
+        <label class="field"><span>السعر (ريال)</span><input id="newPrice" type="number" min="0" step=".25" placeholder="5"></label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span>القسم</span><select id="newCategory"></select></label>
+        <label class="field"><span>رمز المنتج</span><input id="newEmoji" placeholder="🥛" maxlength="4"></label>
+      </div>
+      <button class="action-btn primary-btn" onclick="addProduct()">＋ إضافة المنتج</button>
+      <div class="divider-label">المنتجات الحالية</div>
+      <div id="adminProducts"></div>
+      <p class="note">تنبيه: هذه نسخة تجريبية تحفظ البيانات على هذا الجهاز والمتصفح فقط. لوحة الإدارة غير محمية بكلمة مرور؛ يلزم ربط قاعدة بيانات وتسجيل دخول قبل استخدامها لإدارة متجر فعلي.</p>
+    </div>
+  </div>
+
+  <div id="cartModal" class="modal" onclick="if(event.target===this)closeModal('cartModal')">
+    <div class="panel">
+      <div class="panel-head"><h2>سلة مشترياتك 🛍️</h2><button class="close-btn" onclick="closeModal('cartModal')">✕</button></div>
+      <div id="cartItems"></div>
+      <div class="total-row"><span>الإجمالي</span><strong id="modalTotal">0.00 ر.س</strong></div>
+      <label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" placeholder="أي تفاصيل إضافية؟"></label>
+      <button class="send-btn" onclick="sendOrder()">إرسال الطلب عبر واتساب ↗</button>
+      <p class="muted" style="text-align:center;margin:10px 0 0">سيتم فتح واتساب برسالة تحتوي تفاصيل طلبك.</p>
+    </div>
+  </div>
+
 <script>
 const cats=['الكل','الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
 const demo=[['حليب كامل الدسم','الألبان والأجبان',6,'🥛'],['لبن طازج','الألبان والأجبان',4,'🥛'],['عصير برتقال','المشروبات والعصائر',5,'🧃'],['مياه شرب','المشروبات والعصائر',1,'💧'],['خبز طازج','المخبوزات',2,'🍞'],['أرز 5 كيلو','المواد الغذائية',28,'🍚'],['شوكولاتة','الحلويات والشوكولاتة',3,'🍫'],['سائل غسيل','المنظفات',12,'🧴'],['موز','الخضار والفواكه',5,'🍌'],['فول معلب','المعلبات',4,'🥫']];
 let products=JSON.parse(localStorage.getItem('baqala_products')||'null')||demo.map((p,i)=>({id:i+1,name:p[0],category:p[1],price:p[2],emoji:p[3]}));
 let settings=JSON.parse(localStorage.getItem('baqala_settings')||'{}');
-let cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}');let active='الكل';
+let cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}');
+let active='الكل';
 const money=n=>Number(n).toFixed(2)+' ر.س';
-function persist(){localStorage.setItem('baqala_products',JSON.stringify(products));localStorage.setItem('baqala_cart',JSON.stringify(cart));}
-function renderCats(){document.getElementById('categories').innerHTML=cats.map(c=>'<button class="cat '+(active===c?'active':'')+'" onclick="active='+JSON.stringify(c)+';renderCats();renderProducts()">'+c+'</button>').join('');}
-function renderProducts(){let q=document.getElementById('search').value.trim();let list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.includes(q));document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product"><div class="emoji">'+p.emoji+'</div><h3>'+esc(p.name)+'</h3><div class="muted">'+esc(p.category)+'</div><div class="price">'+money(p.price)+'</div><button class="add" onclick="addCart('+p.id+')">أضف للسلة</button></article>').join(''):'<div class="empty">لا توجد منتجات مطابقة حالياً</div>';}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function persist(){localStorage.setItem('baqala_products',JSON.stringify(products));localStorage.setItem('baqala_cart',JSON.stringify(cart));}
+function renderCats(){document.getElementById('categories').innerHTML=cats.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" onclick="setCategory('+JSON.stringify(c)+')">'+c+'</button>').join('');}
+function setCategory(c){active=c;renderCats();renderProducts();}
+function renderProducts(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));
+  document.getElementById('productCount').textContent=list.length+' منتج';
+  document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+esc(p.emoji||'🛍️')+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+'</strong><button class="add-btn" onclick="addCart('+Number(p.id)+')">＋ أضف</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';
+}
 function addCart(id){cart[id]=(cart[id]||0)+1;persist();renderCartSummary();}
-function total(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0)}
-function renderCartSummary(){let n=Object.values(cart).reduce((a,b)=>a+b,0);document.getElementById('cartTotal').textContent=money(total());document.getElementById('cartCount').textContent=n+' منتجات في السلة';}
-function openCart(){renderCart();document.getElementById('cartModal').style.display='block'}
-function renderCart(){let list=products.filter(p=>cart[p.id]);document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="item-line"><div><b>'+esc(p.name)+'</b><div class="muted">'+money(p.price)+' للقطعة</div></div><div class="qty"><button onclick="changeQty('+p.id+',-1)">−</button> '+cart[p.id]+' <button onclick="changeQty('+p.id+',1)">+</button></div><b>'+money(p.price*cart[p.id])+'</b></div>').join(''):'<div class="empty">السلة فارغة، أضف بعض المنتجات أولاً.</div>';document.getElementById('modalTotal').textContent=money(total());}
+function total(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0);}
+function renderCartSummary(){
+  const n=Object.values(cart).reduce((a,b)=>a+b,0);
+  document.getElementById('cartTotal').textContent=money(total());
+  document.getElementById('cartCount').textContent=n+' منتجات في السلة';
+  document.getElementById('cartBadge').textContent=n;
+}
+function openCart(){renderCart();document.getElementById('cartModal').style.display='block';}
+function renderCart(){
+  const list=products.filter(p=>cart[p.id]);
+  document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="line-item"><div><b>'+esc(p.name)+'</b><div class="line-sub">'+money(p.price)+' للقطعة</div></div><div class="qty-control"><button onclick="changeQty('+Number(p.id)+',-1)">−</button><b>'+cart[p.id]+'</b><button onclick="changeQty('+Number(p.id)+',1)">+</button></div><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong><div class="muted">أضف المنتجات التي تحتاجها وستظهر هنا.</div></div>';
+  document.getElementById('modalTotal').textContent=money(total());
+}
 function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];persist();renderCart();renderCartSummary();}
-function openAdmin(){document.getElementById('adminName').value=settings.name||'بقالة الأحمري';document.getElementById('adminPhone').value=settings.phone||'';document.getElementById('newCategory').innerHTML=cats.slice(1).map(c=>'<option>'+c+'</option>').join('');renderAdminProducts();document.getElementById('adminModal').style.display='block'}
-function closeModal(id){document.getElementById(id).style.display='none'}
-function saveSettings(){settings={name:document.getElementById('adminName').value.trim()||'بقالة الأحمري',phone:document.getElementById('adminPhone').value.replace(/\D/g,'')};localStorage.setItem('baqala_settings',JSON.stringify(settings));document.getElementById('storeTitle').textContent=settings.name;alert('تم حفظ الإعدادات');}
-function addProduct(){let name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value),category=document.getElementById('newCategory').value,emoji=document.getElementById('newEmoji').value.trim()||'🛍️';if(!name||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return}products.push({id:Date.now(),name,price,category,emoji});persist();document.getElementById('newName').value='';document.getElementById('newPrice').value='';document.getElementById('newEmoji').value='';renderAdminProducts();renderProducts();}
-function renderAdminProducts(){document.getElementById('adminProducts').innerHTML=products.map(p=>'<div class="item-line"><span>'+p.emoji+' '+esc(p.name)+' <small class="muted">'+money(p.price)+'</small></span><button class="danger" onclick="removeProduct('+p.id+')">حذف</button></div>').join('')||'<p class="muted">لا توجد منتجات.</p>'}
-function removeProduct(id){if(!confirm('حذف هذا المنتج؟'))return;products=products.filter(p=>p.id!==id);delete cart[id];persist();renderAdminProducts();renderProducts();renderCartSummary();}
-function sendOrder(){let list=products.filter(p=>cart[p.id]);if(!list.length){alert('السلة فارغة');return}if(!settings.phone){alert('أدخل رقم واتساب البقالة من إدارة المتجر أولاً');return}let lines=list.map(p=>'• '+p.name+' × '+cart[p.id]+' = '+money(p.price*cart[p.id]));let msg='السلام عليكم، أريد طلب التالي من '+(settings.name||'بقالة الأحمري')+':\n\n'+lines.join('\n')+'\n\nالإجمالي: '+money(total());let note=document.getElementById('orderNote').value.trim();if(note)msg+='\nملاحظات: '+note;window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');}
-document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';renderCats();renderProducts();renderCartSummary();
-</script></body></html>
+function openAdmin(){
+  document.getElementById('adminName').value=settings.name||'بقالة الأحمري';
+  document.getElementById('adminPhone').value=settings.phone||'';
+  document.getElementById('newCategory').innerHTML=cats.slice(1).map(c=>'<option>'+c+'</option>').join('');
+  renderAdminProducts();document.getElementById('adminModal').style.display='block';
+}
+function closeModal(id){document.getElementById(id).style.display='none';}
+function saveSettings(){
+  settings={name:document.getElementById('adminName').value.trim()||'بقالة الأحمري',phone:document.getElementById('adminPhone').value.replace(/\D/g,'')};
+  localStorage.setItem('baqala_settings',JSON.stringify(settings));
+  document.getElementById('storeTitle').textContent=settings.name;
+  alert('تم حفظ الإعدادات');
+}
+function addProduct(){
+  const name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value),category=document.getElementById('newCategory').value,emoji=document.getElementById('newEmoji').value.trim()||'🛍️';
+  if(!name||!Number.isFinite(price)||price<0){alert('أدخل اسم المنتج وسعراً صحيحاً');return;}
+  products.push({id:Date.now(),name,price,category,emoji});persist();
+  document.getElementById('newName').value='';document.getElementById('newPrice').value='';document.getElementById('newEmoji').value='';
+  renderAdminProducts();renderProducts();
+}
+function renderAdminProducts(){
+  document.getElementById('adminProducts').innerHTML=products.map(p=>'<div class="line-item"><span>'+esc(p.emoji)+' '+esc(p.name)+' <small class="muted">'+money(p.price)+'</small></span><button class="action-btn danger-btn" onclick="removeProduct('+Number(p.id)+')">حذف</button></div>').join('')||'<p class="muted">لا توجد منتجات.</p>';
+}
+function removeProduct(id){
+  if(!confirm('حذف هذا المنتج؟'))return;
+  products=products.filter(p=>p.id!==id);delete cart[id];persist();renderAdminProducts();renderProducts();renderCartSummary();
+}
+function sendOrder(){
+  const list=products.filter(p=>cart[p.id]);
+  if(!list.length){alert('السلة فارغة');return;}
+  if(!settings.phone){alert('أدخل رقم واتساب البقالة من إدارة المتجر أولاً');return;}
+  const lines=list.map(p=>'• '+p.name+' × '+cart[p.id]+' = '+money(p.price*cart[p.id]));
+  let msg='السلام عليكم، أريد طلب التالي من '+(settings.name||'بقالة الأحمري')+':\n\n'+lines.join('\n')+'\n\nالإجمالي: '+money(total());
+  const note=document.getElementById('orderNote').value.trim();if(note)msg+='\nملاحظات: '+note;
+  window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');
+}
+document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';
+renderCats();renderProducts();renderCartSummary();
+</script>
+</body>
+</html>
