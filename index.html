@@ -155,50 +155,43 @@
     </div>
   </div>
 
-<script>
-const cats=['الكل','الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
-const demo=[['حليب كامل الدسم','الألبان والأجبان',6,'🥛'],['لبن طازج','الألبان والأجبان',4,'🥛'],['عصير برتقال','المشروبات والعصائر',5,'🧃'],['مياه شرب','المشروبات والعصائر',1,'💧'],['خبز طازج','المخبوزات',2,'🍞'],['أرز 5 كيلو','المواد الغذائية',28,'🍚'],['شوكولاتة','الحلويات والشوكولاتة',3,'🍫'],['سائل غسيل','المنظفات',12,'🧴'],['موز','الخضار والفواكه',5,'🍌'],['فول معلب','المعلبات',4,'🥫']];
-let products=JSON.parse(localStorage.getItem('baqala_products')||'null')||demo.map((p,i)=>({id:i+1,name:p[0],category:p[1],price:p[2],emoji:p[3]}));
-let settings=JSON.parse(localStorage.getItem('baqala_settings')||'{}');
-let cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}');
-let active='الكل';
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
+let products=[],categories=[],settings={},cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}'),active='الكل';
 const money=n=>Number(n).toFixed(2)+' ر.س';
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function persist(){localStorage.setItem('baqala_products',JSON.stringify(products));localStorage.setItem('baqala_cart',JSON.stringify(cart));}
-function renderCats(){document.getElementById('categories').innerHTML=cats.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" onclick="setCategory('+JSON.stringify(c)+')">'+c+'</button>').join('');}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function persistCart(){localStorage.setItem('baqala_cart',JSON.stringify(cart));}
+async function loadStore(){
+ const [p,c,s]=await Promise.all([
+  supabase.from('store_products').select('id,name,price,emoji,image_url,category:store_categories(name)').eq('is_active',true).order('sort_order').order('name'),
+  supabase.from('store_categories').select('id,name').eq('is_active',true).order('sort_order'),
+  supabase.from('store_settings').select('store_name,whatsapp_number').eq('id',1).maybeSingle()
+ ]);
+ const error=p.error||c.error||s.error;
+ if(error){console.error(error);document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات. تأكد من تفعيل Data API وصلاحيات الجداول في Supabase.</div>';return;}
+ categories=c.data||[];
+ products=(p.data||[]).map(x=>({...x,category:x.category?.name||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price)}));
+ settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||''};
+ document.getElementById('storeTitle').textContent=settings.name;
+ document.querySelector('.hero h2 span').textContent=settings.name;
+ renderCats();renderProducts();renderCartSummary();
+}
+function renderCats(){const names=['الكل',...categories.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;renderCats();renderProducts();}
-function renderProducts(){
-  const q=document.getElementById('search').value.trim().toLowerCase();
-  const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));
-  document.getElementById('productCount').textContent=list.length+' منتج';
-  document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji||'🛍️'))+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+'</strong><button class="add-btn" onclick="addCart('+Number(p.id)+')">＋ أضف</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';
-}
-function addCart(id){cart[id]=(cart[id]||0)+1;persist();renderCartSummary();}
+function renderProducts(){const q=document.getElementById('search').value.trim().toLowerCase();const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));document.getElementById('productCount').textContent=list.length+' منتج';document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+'</strong><button class="add-btn" data-add="'+esc(p.id)+'">＋ أضف</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addCart(b.dataset.add)));}
+function addCart(id){cart[id]=(cart[id]||0)+1;persistCart();renderCartSummary();}
 function total(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0);}
-function renderCartSummary(){
-  const n=Object.values(cart).reduce((a,b)=>a+b,0);
-  document.getElementById('cartTotal').textContent=money(total());
-  document.getElementById('cartCount').textContent=n+' منتجات في السلة';
-  document.getElementById('cartBadge').textContent=n;
-}
-function openCart(){renderCart();document.getElementById('cartModal').style.display='block';}
-function renderCart(){
-  const list=products.filter(p=>cart[p.id]);
-  document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="line-item"><div><b>'+esc(p.name)+'</b><div class="line-sub">'+money(p.price)+' للقطعة</div></div><div class="qty-control"><button onclick="changeQty('+Number(p.id)+',-1)">−</button><b>'+cart[p.id]+'</b><button onclick="changeQty('+Number(p.id)+',1)">+</button></div><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong><div class="muted">أضف المنتجات التي تحتاجها وستظهر هنا.</div></div>';
-  document.getElementById('modalTotal').textContent=money(total());
-}
-function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];persist();renderCart();renderCartSummary();}
-function sendOrder(){
-  const list=products.filter(p=>cart[p.id]);
-  if(!list.length){alert('السلة فارغة');return;}
-  if(!settings.phone){alert('أدخل رقم واتساب البقالة من إدارة المتجر أولاً');return;}
-  const lines=list.map(p=>'• '+p.name+' × '+cart[p.id]+' = '+money(p.price*cart[p.id]));
-  let msg='السلام عليكم، أريد طلب التالي من '+(settings.name||'بقالة الأحمري')+':\n\n'+lines.join('\n')+'\n\nالإجمالي: '+money(total());
-  const note=document.getElementById('orderNote').value.trim();if(note)msg+='\nملاحظات: '+note;
-  window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');
-}
-document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';
-renderCats();renderProducts();renderCartSummary();
+function renderCartSummary(){const n=Object.values(cart).reduce((a,b)=>a+b,0);document.getElementById('cartTotal').textContent=money(total());document.getElementById('cartCount').textContent=n+' منتجات في السلة';document.getElementById('cartBadge').textContent=n;}
+window.openCart=function(){renderCart();document.getElementById('cartModal').style.display='block';};
+window.closeModal=function(id){document.getElementById(id).style.display='none';};
+function renderCart(){const list=products.filter(p=>cart[p.id]);document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="line-item"><div><b>'+esc(p.name)+'</b><div class="line-sub">'+money(p.price)+' للقطعة</div></div><div class="qty-control"><button data-dec="'+esc(p.id)+'">−</button><b>'+cart[p.id]+'</b><button data-inc="'+esc(p.id)+'">+</button></div><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong></div>';document.getElementById('modalTotal').textContent=money(total());document.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.dec,-1)));document.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.inc,1)));}
+function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];persistCart();renderCart();renderCartSummary();}
+window.sendOrder=function(){const list=products.filter(p=>cart[p.id]);if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const lines=list.map(p=>'• '+p.name+' × '+cart[p.id]+' = '+money(p.price*cart[p.id]));let msg='السلام عليكم، أريد طلب التالي من '+settings.name+':\n\n'+lines.join('\n')+'\n\nالإجمالي: '+money(total());const note=document.getElementById('orderNote').value.trim();if(note)msg+='\nملاحظات: '+note;window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');};
+document.getElementById('search').addEventListener('input',renderProducts);
+await loadStore();
+supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
 </body>
 </html>
