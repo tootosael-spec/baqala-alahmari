@@ -11,6 +11,7 @@
 /* Mobile viewport containment */
 html,body{width:100%;max-width:100%;overflow-x:clip}body{min-width:0}
 .top,.wrap,.welcome,.layout,.stats,.stat,.card,.row,.item,.item-main{min-width:0;max-width:100%}
+.image-search-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.image-choice{border:1px solid #dce5dc;background:#fff;border-radius:12px;padding:8px;text-align:right;min-width:0}.image-choice img{width:100%;height:112px;object-fit:contain;background:#f4f7f4;border-radius:8px}.image-choice strong{display:block;font-size:12px;margin-top:6px;line-height:1.5}.image-choice small{display:block;font-size:10px;color:#758178;margin-top:3px}.image-search-modal{position:fixed;inset:0;background:#0009;z-index:11000;display:none;align-items:center;justify-content:center;padding:12px}.image-search-panel{width:min(100%,620px);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:16px}.image-search-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.image-search-head h3{margin:0}.image-search-grid .image-choice{cursor:pointer}@media(max-width:390px){.image-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.image-choice img{height:92px}}
 .row{flex-wrap:wrap}.actions{max-width:100%;flex-wrap:wrap}.item{flex-wrap:wrap}
 img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;min-width:0}
 @media(max-width:760px){.top{flex-wrap:wrap}.layout{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -32,7 +33,7 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
 <div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><div class="field"><span>وحدات البيع والأسعار</span><div class="row"><select id="pUnitChoice" class="field"><option>حبة</option><option>كيلو</option><option>نصف كيلو</option><option>ربع كيلو</option><option>باكيت</option><option>كرتون</option><option>كيس</option><option>علبة</option><option>لتر</option></select><input id="pUnitPrice" type="number" min="0" step="0.01" placeholder="السعر"></div><button class="btn light" type="button" id="addUnitBtn">＋ إضافة الوحدة</button><div id="unitChoicesList" class="item-meta">لم تتم إضافة وحدات بعد.</div></div><p class="item-meta" id="unitHelp">اختر الوحدة من القائمة وأدخل سعرها ثم اضغط إضافة الوحدة. يمكن إضافة أكثر من وحدة.</p>
-<label class="field"><span>أيقونة المنتج (تُختار تلقائياً ويمكن تغييرها)</span><input id="pEmoji" maxlength="8" value="🛒" placeholder="🥛"><small class="item-meta">اكتب اسم المنتج وستُقترح أيقونة مناسبة تلقائياً، ويمكنك تعديلها يدوياً.</small></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
+<label class="field"><span>أيقونة المنتج (تُختار تلقائياً ويمكن تغييرها)</span><input id="pEmoji" maxlength="8" value="🛒" placeholder="🥛"><small class="item-meta">اكتب اسم المنتج وستُقترح أيقونة مناسبة تلقائياً، ويمكنك تعديلها يدوياً.</small></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><button class="btn light full" type="button" id="searchProductImageBtn">🔎 ابحث عن صورة جاهزة باسم الصنف</button><div id="selectedImagePreview" style="display:none;margin-top:10px"><img id="selectedImagePreviewImg" alt="معاينة صورة المنتج المختارة" style="width:100%;height:130px;object-fit:contain;background:#f4f7f4;border-radius:12px"><p id="selectedImageCredit" class="item-meta"></p></div><p id="imageStatus" class="item-meta">ابحث باسم الصنف واختر صورة جاهزة، أو ارفع صورة من جوالك. الصور الجاهزة من مصادر مفتوحة.</p>
 
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
 </section>
@@ -67,6 +68,8 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
   <p id="generatedManagerCodeStatus" class="hint" aria-live="polite"></p>
  </section>
 </div>
+
+<div id="productImageSearchModal" class="image-search-modal" role="dialog" aria-modal="true" aria-labelledby="imageSearchTitle"><section class="image-search-panel"><div class="image-search-head"><h3 id="imageSearchTitle">اختر صورة للمنتج</h3><button type="button" class="btn light" id="closeImageSearchBtn">إغلاق</button></div><p id="imageSearchMessage" class="item-meta">جارٍ البحث عن صور مناسبة...</p><div id="imageSearchResults" class="image-search-grid"></div></section></div>
 
 <script type="module">
 let createClient;
@@ -356,6 +359,55 @@ function refreshSuggestedEmoji(){
 }
 document.getElementById('pName').addEventListener('input',refreshSuggestedEmoji);
 document.getElementById('pCategory').addEventListener('change',refreshSuggestedEmoji);
+
+const imageSearchModal=document.getElementById('productImageSearchModal');
+const imageSearchMessage=document.getElementById('imageSearchMessage');
+const imageSearchResults=document.getElementById('imageSearchResults');
+function closeProductImageSearch(){imageSearchModal.style.display='none';}
+document.getElementById('closeImageSearchBtn').addEventListener('click',closeProductImageSearch);
+imageSearchModal.addEventListener('click',event=>{if(event.target===imageSearchModal)closeProductImageSearch();});
+document.getElementById('searchProductImageBtn').addEventListener('click',async()=>{
+ const term=document.getElementById('pName').value.trim();
+ if(!term){alert('اكتب اسم المنتج أولاً حتى نبحث عن صورته.');document.getElementById('pName').focus();return;}
+ imageSearchModal.style.display='flex';
+ imageSearchMessage.textContent='جارٍ البحث عن صور مفتوحة الاستخدام باسم: '+term;
+ imageSearchResults.replaceChildren();
+ const button=document.getElementById('searchProductImageBtn');
+ button.disabled=true;button.textContent='جارٍ البحث...';
+ try{
+  const endpoint='https://api.openverse.org/v1/images/?q='+encodeURIComponent(term)+'&license=cc0,pdm&page_size=12&mature=false';
+  const response=await fetch(endpoint,{headers:{Accept:'application/json'}});
+  if(!response.ok)throw new Error(response.status===429?'وصل البحث إلى الحد المؤقت. انتظر قليلاً ثم أعد المحاولة.':'تعذر الوصول إلى خدمة الصور (HTTP '+response.status+').');
+  const data=await response.json();
+  const results=Array.isArray(data.results)?data.results:[];
+  if(!results.length){imageSearchMessage.textContent='لم نعثر على صور مناسبة لهذا الاسم. جرّب كتابة اسم الصنف بالإنجليزية أو استخدم صورة من الجوال.';return;}
+  imageSearchMessage.textContent='اختر الصورة الأقرب للمنتج. النتائج من صور مرخصة CC0 أو ملكية عامة.';
+  results.forEach(item=>{
+   if(!item.url||!item.thumbnail)return;
+   const choice=document.createElement('button');choice.type='button';choice.className='image-choice';
+   const img=document.createElement('img');img.src=item.thumbnail;img.alt=item.title||term;img.loading='lazy';
+   const title=document.createElement('strong');title.textContent=item.title||'صورة منتج';
+   const license=document.createElement('small');license.textContent=(item.license||'صورة مفتوحة')+' · '+(item.creator||'المصدر');
+   choice.append(img,title,license);
+   choice.addEventListener('click',()=>{
+    document.getElementById('pImage').value=item.url;
+    document.getElementById('pImageFile').value='';
+    document.getElementById('selectedImagePreviewImg').src=item.thumbnail;
+    document.getElementById('selectedImagePreview').style.display='block';
+    document.getElementById('selectedImageCredit').textContent='تم اختيار الصورة: '+(item.title||term)+' — '+(item.license||'ترخيص مفتوح')+'.';
+    document.getElementById('imageStatus').textContent='تم اختيار صورة جاهزة. ستُحفظ مع المنتج عند الضغط على «إضافة المنتج».';
+    closeProductImageSearch();
+   });
+   imageSearchResults.append(choice);
+  });
+  if(!imageSearchResults.children.length)imageSearchMessage.textContent='لم تظهر صور قابلة للاختيار. جرّب اسماً آخر أو استخدم صورة من الجوال.';
+ }catch(error){
+  console.error('Product image search failed:',error);
+  imageSearchMessage.textContent=(error.message||'تعذر البحث عن الصور.')+' يمكنك متابعة إضافة المنتج بدون صورة.';
+ }finally{
+  button.disabled=false;button.textContent='🔎 ابحث عن صورة جاهزة باسم الصنف';
+ }
+});
 await restoreAdminSession();
 document.getElementById('logoutButton').addEventListener('click',async()=>{
  const button=document.getElementById('logoutButton');button.disabled=true;button.textContent='جارٍ تسجيل الخروج...';
