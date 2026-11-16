@@ -73,8 +73,20 @@ async function loadAll(){
  $('pendingCount').textContent=receipts.filter(r=>r.status==='pending').length;
  $('storesList').innerHTML=stores.length?stores.map(s=>{
   const sub=(Array.isArray(s.subscriptions)?s.subscriptions[0]:s.subscriptions)||{};
-  return '<div class="store"><h3>'+esc(s.name)+'</h3><div class="muted">'+esc(s.slug)+' · '+esc(s.owner_email||'لم يحدد بريد المالك')+'</div><div><span class="tag">الاشتراك: '+esc(sub.status||'غير مسجل')+'</span><span class="tag">'+esc(sub.amount??50)+' '+esc(sub.currency||'SAR')+' شهرياً</span><span class="tag">حالة المشروع: '+esc(s.operational_status)+'</span></div><div class="row" style="margin-top:8px"><input type="email" id="owner-'+s.id+'" placeholder="بريد صاحب البقالة المسجل"><button class="secondary" data-link="'+s.id+'">ربط حساب المالك</button></div><div class="muted" style="margin-top:6px">معرّف البقالة: '+esc(s.id)+'</div></div>'
+  return '<div class="store"><h3>'+esc(s.name)+'</h3><div class="muted">'+esc(s.slug)+' · '+esc(s.owner_email||'لم يحدد بريد المالك')+'</div><div><span class="tag">الاشتراك: '+esc(sub.status||'غير مسجل')+'</span><span class="tag">'+esc(sub.amount??50)+' '+esc(sub.currency||'SAR')+' شهرياً</span><span class="tag">حالة المشروع: '+esc(s.operational_status)+'</span></div><div class="row" style="margin-top:8px"><input type="email" id="owner-'+s.id+'" placeholder="بريد صاحب البقالة المسجل"><button class="secondary" data-link="'+s.id+'">ربط حساب المالك</button></div><div class="muted" style="margin-top:6px">معرّف البقالة: '+esc(s.id)+'</div><div class="muted">'+(s.enforcement_enabled?'التحقق المركزي من الاشتراك مفعل':'التحقق المركزي غير مفعل بعد')+'</div><button class="secondary" style="margin-top:8px" data-toggle-store="'+s.id+'" data-current="'+esc(s.operational_status)+'">'+(s.operational_status==='suspended'?'إعادة تشغيل المتجر':'إيقاف المتجر')+'</button></div>'
  }).join(''):'لا توجد بقالات مسجلة بعد.';
+ $('storesList').querySelectorAll('[data-toggle-store]').forEach(btn=>btn.addEventListener('click',async()=>{
+  const suspended=btn.dataset.current==='suspended';
+  const next=suspended?'active':'suspended';
+  if(!confirm(suspended?'إعادة تشغيل المتجر؟ سيظل المتجر محجوباً إذا لم يكن اشتراكه نشطاً.':'إيقاف المتجر ومنع فتح واجهة الزبائن؟'))return;
+  btn.disabled=true;
+  const {data:{user}}=await sb.auth.getUser();
+  const {error}=await sb.from('stores').update({operational_status:next,enforcement_enabled:true,updated_at:new Date().toISOString()}).eq('id',btn.dataset.toggleStore);
+  if(error){btn.disabled=false;alert(error.message);return}
+  await sb.from('subscription_events').insert({store_id:btn.dataset.toggleStore,actor_user_id:user.id,event_type:suspended?'store_reactivated':'store_suspended',details:{operational_status:next}});
+  await loadAll();
+  alert(suspended?'تمت إعادة الحالة إلى نشط. لن يفتح المتجر إلا إذا كان اشتراكه سارياً.':'تم إيقاف واجهة المتجر.');
+ }));
  $('storesList').querySelectorAll('[data-link]').forEach(btn=>btn.addEventListener('click',async()=>{
   const email=$('owner-'+btn.dataset.link).value.trim();if(!email){alert('اكتب بريد صاحب البقالة');return}
   btn.disabled=true;
@@ -106,7 +118,7 @@ async function review(id,approve,btn){
  if(uerr){btn.disabled=false;alert(uerr.message);return}
  if(approve){
   const base=sub.status==='active'&&sub.ends_at&&new Date(sub.ends_at)>now?new Date(sub.ends_at):now;
-  const start=sub.starts_at||now.toISOString();
+  const start=sub.status==='active'&&sub.ends_at&&new Date(sub.ends_at)>now?(sub.starts_at||now.toISOString()):now.toISOString();
   const end=addMonths(base,receipt.requested_months);
   const {error:e}=await sb.from('subscriptions').update({status:'active',starts_at:start,ends_at:end.toISOString(),updated_at:now.toISOString()}).eq('store_id',receipt.store_id);
   if(e){alert('تم تحديث الإيصال لكن تعذر تحديث الاشتراك: '+e.message);return}
