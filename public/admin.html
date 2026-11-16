@@ -58,6 +58,8 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 <label class="field"><span>قيمة التوصيل (ريال)</span><input id="deliveryFee" type="number" min="0" step="0.25" placeholder="0"></label>
 <label class="field"><span>حد الطلب للتوصيل المجاني (ريال)</span><input id="freeDeliveryThreshold" type="number" min="0" step="0.25" placeholder="30"></label>
 <p class="item-meta">إذا وصل مجموع المنتجات إلى هذا المبلغ أو أكثر، يصبح التوصيل مجانياً. ضع 0 لتعطيل شرط الحد.</p>
+<div class="row"><label class="field"><span>بداية استقبال الطلبات</span><input id="orderAcceptanceStart" type="time"></label><label class="field"><span>نهاية استقبال الطلبات</span><input id="orderAcceptanceEnd" type="time"></label></div>
+<p class="item-meta">اترك الوقتين فارغين لاستقبال الطلبات طوال اليوم. الأوقات حسب توقيت السعودية، ويمكن ضبط فترة تتجاوز منتصف الليل.</p>
 <button class="btn primary full" type="submit">حفظ الإعدادات</button></form>
 <div class="hint">المنتجات والإعدادات محفوظة الآن في قاعدة بيانات Supabase المشتركة. الدخول محمي بحساب صاحب المتجر وسياسات RLS. رفع الصور متاح عبر رابط مباشر حالياً، وتوليد الصور بالذكاء الاصطناعي يحتاج ربط خدمة مستقلة.</div>
 </section>
@@ -326,6 +328,8 @@ async function loadData(){
   document.getElementById('storePhone').value=settings.whatsapp_number||'';
   document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
   document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
+  document.getElementById('orderAcceptanceStart').value=settings.order_acceptance_start||'';
+  document.getElementById('orderAcceptanceEnd').value=settings.order_acceptance_end||'';
   await loadManagers();
  }else renderManagerCategoryChecks();
  await loadOrders();
@@ -521,7 +525,8 @@ document.getElementById('headerImageFile').addEventListener('change',e=>{
 });
 document.getElementById('settingsForm').addEventListener('submit',async e=>{
  e.preventDefault();
- const store_name=document.getElementById('storeName').value.trim()||'بقالة الأحمري',whatsapp_number=document.getElementById('storePhone').value.replace(/\D/g,'')||null,delivery_fee=Number(document.getElementById('deliveryFee').value),free_delivery_threshold=Number(document.getElementById('freeDeliveryThreshold').value);
+ const store_name=document.getElementById('storeName').value.trim()||'بقالة الأحمري',whatsapp_number=document.getElementById('storePhone').value.replace(/\D/g,'')||null,delivery_fee=Number(document.getElementById('deliveryFee').value),free_delivery_threshold=Number(document.getElementById('freeDeliveryThreshold').value),order_acceptance_start=document.getElementById('orderAcceptanceStart').value||null,order_acceptance_end=document.getElementById('orderAcceptanceEnd').value||null;
+ if(Boolean(order_acceptance_start)!==Boolean(order_acceptance_end)|| (order_acceptance_start&&order_acceptance_start===order_acceptance_end)){alert('حدد وقت البداية والنهاية بشكل صحيح، أو اتركهما فارغين لاستقبال الطلبات طوال اليوم.');return;}
  if(!Number.isFinite(delivery_fee)||delivery_fee<0||!Number.isFinite(free_delivery_threshold)||free_delivery_threshold<0){alert('أدخل قيمة التوصيل وحد التوصيل المجاني بشكل صحيح');return;}
  const status=document.getElementById('headerImageStatus'),file=document.getElementById('headerImageFile').files[0],remove=document.getElementById('removeHeaderImage').checked;
  let header_image_url=settings.header_image_url||null;
@@ -533,7 +538,7 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
   if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع صورة الخلفية: '+uploadError.message);return;}
   header_image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
  }else if(remove){header_image_url=null;}
- const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url,updated_at:new Date().toISOString()}).eq('id',1);
+ const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,order_acceptance_start,order_acceptance_end,header_image_url,updated_at:new Date().toISOString()}).eq('id',1);
  if(error){alert('تعذر حفظ الإعدادات: '+error.message);return;}
  alert('تم حفظ الإعدادات');
  document.getElementById('headerImageFile').value='';
