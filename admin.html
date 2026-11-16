@@ -17,7 +17,7 @@
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
 <div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><div class="field"><span>وحدات البيع والأسعار</span><div class="row"><select id="pUnitChoice" class="field"><option>حبة</option><option>كيلو</option><option>نصف كيلو</option><option>ربع كيلو</option><option>باكيت</option><option>كرتون</option><option>كيس</option><option>علبة</option><option>لتر</option></select><input id="pUnitPrice" type="number" min="0" step="0.01" placeholder="السعر"></div><button class="btn light" type="button" id="addUnitBtn">＋ إضافة الوحدة</button><div id="unitChoicesList" class="item-meta">لم تتم إضافة وحدات بعد.</div></div><p class="item-meta" id="unitHelp">اختر الوحدة من القائمة وأدخل سعرها ثم اضغط إضافة الوحدة. يمكن إضافة أكثر من وحدة.</p>
-<label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
+<label class="field"><span>أيقونة المنتج (تُختار تلقائياً ويمكن تغييرها)</span><input id="pEmoji" maxlength="8" value="🛒" placeholder="🥛"><small class="item-meta">اكتب اسم المنتج وستُقترح أيقونة مناسبة تلقائياً، ويمكنك تعديلها يدوياً.</small></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
 
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
 </section>
@@ -83,6 +83,21 @@ const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
 let products=[],categories=[],settings={},managers=[];
 let currentRole='',editingManagerId=null;
 const money=n=>Number(n).toFixed(2)+' ر.س';
+function autoProductEmoji(name,categoryName){
+ const n=String(name||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase();
+ const rules=[
+  [/طماطم|بندوره/,'🍅'],[/خيار/,'🥒'],[/بطاطس|بطاطا/,'🥔'],[/بصل/,'🧅'],[/جزر/,'🥕'],[/فلفل/,'🫑'],[/كوسه/,'🥒'],[/باذنجان/,'🍆'],[/ثوم/,'🧄'],[/خس|جرجير|ملفوف|كرنب|سبانخ|بقدونس|كزبره|نعناع/,'🥬'],
+  [/تفاح/,'🍎'],[/موز/,'🍌'],[/برتقال/,'🍊'],[/ليمون/,'🍋'],[/عنب/,'🍇'],[/فراوله/,'🍓'],[/بطيخ|حبحب/,'🍉'],[/مانجو/,'🥭'],[/تمر/,'🌴'],
+  [/حليب|لبن|لبنه/,'🥛'],[/جبن/,'🧀'],[/زبادي|روب/,'🥣'],[/بيض/,'🥚'],[/خبز|صامولي|تميس|توست|فطير/,'🥖'],[/كيك|كعك/,'🍰'],[/كرواسون/,'🥐'],
+  [/ارز|رز/,'🍚'],[/سكر/,'🍬'],[/زيت/,'🫒'],[/دقيق|طحين/,'🌾'],[/شاي/,'🍵'],[/قهوه/,'☕'],[/ماء|مويا|موية/,'💧'],[/عصير/,'🧃'],[/تونه|معلبات/,'🥫'],[/اندومي|نودلز/,'🍜'],[/بسكويت|كوكيز/,'🍪'],[/شوكولاته/,'🍫'],[/منظف|صابون|شامبو/,'🧴']
+ ];
+ const match=rules.find(([pattern])=>pattern.test(n));
+ if(match)return match[1];
+ if(/خضار/.test(categoryName||''))return '🥬';
+ if(/مخبز/.test(categoryName||''))return '🥖';
+ if(/تموين/.test(categoryName||''))return '🛒';
+ return '🛍️';
+}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function parseUnits(raw){return raw.split(/\r?\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
 function prepareUnits(raw,categoryId){return parseUnits(raw);}
@@ -280,6 +295,13 @@ supabase.auth.onAuthStateChange((event,session)=>{
   queueMicrotask(()=>enterAdmin(session));
  }
 });
+function refreshSuggestedEmoji(){
+ const categoryId=document.getElementById('pCategory').value;
+ const categoryName=categories.find(c=>c.id===categoryId)?.name||'';
+ document.getElementById('pEmoji').value=autoProductEmoji(document.getElementById('pName').value,categoryName);
+}
+document.getElementById('pName').addEventListener('input',refreshSuggestedEmoji);
+document.getElementById('pCategory').addEventListener('change',refreshSuggestedEmoji);
 await restoreAdminSession();
 document.getElementById('logoutButton').addEventListener('click',async()=>{
  const button=document.getElementById('logoutButton');button.disabled=true;
