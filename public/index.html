@@ -222,6 +222,20 @@ input,select,textarea{max-width:100%;min-width:0}
   </div>
 
 
+<script>
+(function(){
+ const cats=document.getElementById('categories');
+ const products=document.getElementById('products');
+ if(cats)cats.innerHTML='<div class="empty-state">جارٍ تحميل الأقسام...</div>';
+ if(products)products.innerHTML='<div class="empty-state">جارٍ تحميل المنتجات...</div>';
+ window.__BAQALA_STORE_READY__=false;
+ window.setTimeout(function(){
+  if(window.__BAQALA_STORE_READY__)return;
+  if(cats)cats.innerHTML='<div class="empty-state">تأخر تحميل المتجر. تأكد من اتصال الإنترنت ثم اضغط إعادة المحاولة.</div>';
+  if(products)products.innerHTML='<div class="empty-state"><button type="button" onclick="window.location.reload()" style="padding:10px 16px;border:0;border-radius:10px;background:#238653;color:#fff">إعادة تحميل المتجر</button><p>المنتجات محفوظة ولم يتم حذفها.</p></div>';
+ },18000);
+})();
+</script>
 <script type="module">
 let createClient;
 try {
@@ -230,10 +244,14 @@ try {
   try {
     ({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));
   } catch (fallbackError) {
-    console.error('Supabase library could not be loaded from either CDN:',primaryError,fallbackError);
-    document.getElementById('categories').innerHTML='<div class="empty-state">تعذر الاتصال بخدمة المتجر. تحقق من اتصال الإنترنت ثم أعد تحميل الصفحة.</div>';
-    document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً.</div>';
-    throw fallbackError;
+    try {
+      ({createClient}=await import('https://esm.run/@supabase/supabase-js@2.57.0'));
+    } catch (thirdError) {
+      console.error('Supabase library could not be loaded from available CDNs:',primaryError,fallbackError,thirdError);
+      document.getElementById('categories').innerHTML='<div class="empty-state">تعذر تحميل مكتبة المتجر. تحقق من الاتصال ثم أعد تحميل الصفحة.</div>';
+      document.getElementById('products').innerHTML='<div class="empty-state">لم يتم حذف المنتجات؛ تعذر تشغيل واجهة المتجر.</div>';
+      throw thirdError;
+    }
   }
 }
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
@@ -341,6 +359,7 @@ window.sendOrder=function(){const list=cartEntries();if(!list.length){alert('ا�
 document.getElementById('search').addEventListener('input',renderProducts);
 document.getElementById('favoritesToggle').addEventListener('click',()=>{showFavorites=!showFavorites;renderProducts();});
 await loadStore();
+window.__BAQALA_STORE_READY__=true;
 updateReorderButton();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_product_units'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
