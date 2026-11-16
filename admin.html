@@ -86,14 +86,12 @@ const SUPABASE_URL='https://mjykxdxtjntozlnwikim.supabase.co';
 const SUPABASE_PUBLIC_KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35';
 const MANAGER_FUNCTION_URL=SUPABASE_URL+'/functions/v1/department-manager-access';
 const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
- auth:{
-  storage:window.localStorage,
-  persistSession:true,
-  autoRefreshToken:true,
-  detectSessionInUrl:true,
-  flowType:'pkce'
- }
+ auth:{storage:window.localStorage,storageKey:'baqala_owner_auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}
 });
+const managerSupabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
+ auth:{storage:window.localStorage,storageKey:'baqala_manager_auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit'}
+});
+let activeClient=supabase,activeAuthClient=supabase;
 
 let products=[],categories=[],settings={},managers=[];
 let currentRole='',editingManagerId=null;
@@ -196,9 +194,9 @@ function showMessage(message){const el=document.getElementById('authMessage');el
 async function loadData(){
  const managerMode=currentRole==='department_manager';
  const [c,p,u]=await Promise.all([
-  supabase.from('store_categories').select('id,name,sort_order').order('sort_order'),
-  supabase.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
-  supabase.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order')
+  activeClient.from('store_categories').select('id,name,sort_order').order('sort_order'),
+  activeClient.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
+  activeClient.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order')
  ]);
  if(c.error||p.error||u.error)throw [c.error,p.error,u.error].find(Boolean);
  categories=c.data||[];
@@ -221,9 +219,9 @@ async function loadData(){
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
  if(!managerMode){
   const [s,ordersTotal,ordersToday]=await Promise.all([
-   supabase.from('store_settings').select('*').eq('id',1).single(),
-   supabase.from('store_order_events').select('id',{count:'exact',head:true}),
-   supabase.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
+   activeClient.from('store_settings').select('*').eq('id',1).single(),
+   activeClient.from('store_order_events').select('id',{count:'exact',head:true}),
+   activeClient.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
   ]);
   if(s.error||ordersTotal.error||ordersToday.error)throw [s.error,ordersTotal.error,ordersToday.error].find(Boolean);
   settings=s.data||{};
@@ -251,14 +249,22 @@ function clearAdminState(){
  document.getElementById('adminApp').style.display='none';
  document.getElementById('authGate').style.display='block';
 }
-async function enterAdmin(session){
+async function enterAdmin(session,authClient=supabase){
+ const user=session?.user;if(!user)return;
+ const role=user.app_metadata?.role;
+ activeAuthClient=authClient;
+ activeClient=authClient;
+ if(role==='store_admin'&&authClient!==supabase)throw new Error('مسار دخول المالك غير صحيح');
+ if(role==='department_manager'&&authClient!==managerSupabase)throw new Error('مسار دخول مدير القسم غير صحيح');
+ localStorage.setItem('baqala_active_admin_role',role||'');
+
  const user=session?.user;if(!user)return;
  if(enteringAdmin||activeAdminUserId===user.id)return;
  enteringAdmin=true;
  try{
   const role=user.app_metadata?.role;
   if(!['store_admin','department_manager'].includes(role)){
-   await supabase.auth.signOut({scope:'local'});
+   await authClient.auth.signOut({scope:'local'});
    clearAdminState();showMessage('هذا الحساب غير مخوّل لإدارة المتجر.');return;
   }
   currentRole=role;activeAdminUserId=user.id;const owner=role==='store_admin';
@@ -284,7 +290,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  try{
   const {data,error}=await supabase.auth.signInWithPassword({email,password});
   if(error)throw error;
-  if(data.session)await enterAdmin(data.session);
+  if(data.session)await enterAdmin(data.session,supabase);
   else showMessage('لم يتم إنشاء جلسة دخول. تحقق من بيانات الحساب وحاول مجدداً.');
  }catch(error){showAuthGate('تعذر تسجيل الدخول: '+(error.message||'تحقق من الاتصال ثم حاول مجدداً.'));console.error(error);}
  finally{btn.disabled=false;btn.textContent='دخول لوحة الإدارة';}
@@ -297,9 +303,9 @@ document.getElementById('managerCodeForm').addEventListener('submit',async e=>{
   const response=await fetch(MANAGER_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLIC_KEY,'Authorization':'Bearer '+SUPABASE_PUBLIC_KEY},body:JSON.stringify({action:'login',code:document.getElementById('managerCode').value.trim()}),signal:controller.signal});
   const result=await response.json().catch(()=>({error:'تعذر قراءة استجابة الخادم'}));
   if(!response.ok||!result.session)throw new Error(result.error||'الكود غير صحيح أو لم يعد صالحاً');
-  const {error}=await supabase.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+  const {data:sessionData,error}=await managerSupabase.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
   if(error)throw error;
-  await enterAdmin({user:result.user,access_token:result.session.access_token});
+  await enterAdmin(sessionData.session||{user:result.user,access_token:result.session.access_token},managerSupabase);
  }catch(err){
   message.textContent=err.name==='AbortError'?'استغرق التحقق وقتاً أطول من المعتاد. تحقق من الاتصال ثم أعد المحاولة.':(err.message||'تعذر تسجيل الدخول');
   message.style.display='block';
@@ -307,22 +313,43 @@ document.getElementById('managerCodeForm').addEventListener('submit',async e=>{
 });
 async function restoreAdminSession(){
  try{
+  const selectedRole=localStorage.getItem('baqala_active_admin_role');
+  if(selectedRole==='logged_out'){showAuthGate();return;}
+  if(selectedRole==='department_manager'){
+   const {data:{session},error}=await managerSupabase.auth.getSession();
+   if(error)throw error;
+   if(session)await enterAdmin(session,managerSupabase);else showAuthGate();
+   return;
+  }
+  if(selectedRole==='store_admin'){
+   const {data:{session},error}=await supabase.auth.getSession();
+   if(error)throw error;
+   if(session)await enterAdmin(session,supabase);else showAuthGate();
+   return;
+  }
+  // ترحيل جلسة قديمة محفوظة قبل فصل المسارين.
   const {data:{session},error}=await supabase.auth.getSession();
   if(error)throw error;
-  if(session)await enterAdmin(session);
+  if(session?.user?.app_metadata?.role==='department_manager'){
+   const moved=await managerSupabase.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token});
+   if(moved.error)throw moved.error;
+   await supabase.auth.signOut({scope:'local'});
+   await enterAdmin(moved.data.session,managerSupabase);
+  }else if(session)await enterAdmin(session,supabase);
   else showAuthGate();
  }catch(error){
   console.error('Session restore failed:',error);
   showAuthGate('تعذر التحقق من جلسة الدخول بسبب الاتصال. أعد المحاولة أو حدّث الصفحة.');
  }finally{adminSessionReady=true;}
 }
-supabase.auth.onAuthStateChange((event)=>{
- if(event==='SIGNED_OUT'){
+function handleAuthSignOut(role){
+ if(localStorage.getItem('baqala_active_admin_role')===role){
+  localStorage.setItem('baqala_active_admin_role','logged_out');
   clearAdminState();
  }
- // SIGNED_IN is handled directly by the login forms and restoreAdminSession().
- // Avoid starting Supabase queries from inside the auth event cycle.
-});
+}
+supabase.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')handleAuthSignOut('store_admin');});
+managerSupabase.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')handleAuthSignOut('department_manager');});
 function refreshSuggestedEmoji(){
  const categoryId=document.getElementById('pCategory').value;
  const categoryName=categories.find(c=>c.id===categoryId)?.name||'';
@@ -334,8 +361,9 @@ await restoreAdminSession();
 document.getElementById('logoutButton').addEventListener('click',async()=>{
  const button=document.getElementById('logoutButton');button.disabled=true;button.textContent='جارٍ تسجيل الخروج...';
  try{
-  const {error}=await supabase.auth.signOut({scope:'local'});
+  const {error}=await activeAuthClient.auth.signOut({scope:'local'});
   if(error)throw error;
+  localStorage.setItem('baqala_active_admin_role','logged_out');
   clearAdminState();
   document.getElementById('loginPassword').value='';
   document.getElementById('managerCode').value='';
@@ -373,16 +401,16 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
   const status=document.getElementById('imageStatus');status.textContent='جارٍ رفع الصورة...';
   const ext=(imageFile.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
   const path='products/'+category_id+'/'+crypto.randomUUID()+'.'+ext;
-  const {error:uploadError}=await supabase.storage.from('product-images').upload(path,imageFile,{contentType:imageFile.type,upsert:false});
+  const {error:uploadError}=await activeClient.storage.from('product-images').upload(path,imageFile,{contentType:imageFile.type,upsert:false});
   if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع الصورة: '+uploadError.message);return;}
-  image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+  image_url=activeClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;
  }
- const {data:created,error}=await supabase.from('store_products').insert({name,price:units[0].price,unit:units[0].name,category_id,emoji,image_url,is_active:true}).select('id').single();
+ const {data:created,error}=await activeClient.from('store_products').insert({name,price:units[0].price,unit:units[0].name,category_id,emoji,image_url,is_active:true}).select('id').single();
  if(error){alert('تعذر إضافة المنتج: '+error.message);return;}
- const {error:unitError}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:created.id,sort_order:i})));
+ const {error:unitError}=await activeClient.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:created.id,sort_order:i})));
  if(unitError){
-  await supabase.from('store_products').delete().eq('id',created.id);
-  if(image_url&&!manualImage){const uploadedPath=image_url.split('/product-images/').pop();if(uploadedPath)await supabase.storage.from('product-images').remove([uploadedPath]);}
+  await activeClient.from('store_products').delete().eq('id',created.id);
+  if(image_url&&!manualImage){const uploadedPath=image_url.split('/product-images/').pop();if(uploadedPath)await activeClient.storage.from('product-images').remove([uploadedPath]);}
   alert('تعذر حفظ وحدات المنتج، لذلك ألغينا إنشاء المنتج حتى لا يظهر ناقصاً: '+unitError.message);return;
  }
  e.target.reset();chosenUnits=[];renderChosenUnits();syncUnitCategory();clearAiImagePreview();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال أو توليدها بالذكاء الاصطناعي.';await loadData();
@@ -406,11 +434,11 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
   status.textContent='جارٍ رفع صورة الخلفية...';
   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
   const path='header/'+crypto.randomUUID()+'.'+ext;
-  const {error:uploadError}=await supabase.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
+  const {error:uploadError}=await activeClient.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
   if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع صورة الخلفية: '+uploadError.message);return;}
-  header_image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+  header_image_url=activeClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;
  }else if(remove){header_image_url=null;}
- const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url,updated_at:new Date().toISOString()}).eq('id',1);
+ const {error}=await activeClient.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url,updated_at:new Date().toISOString()}).eq('id',1);
  if(error){alert('تعذر حفظ الإعدادات: '+error.message);return;}
  alert('تم حفظ الإعدادات');
  document.getElementById('headerImageFile').value='';
@@ -435,24 +463,24 @@ async function editProduct(id){
  list.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b)return;units.splice(Number(b.dataset.del),1);draw();});
  panel.querySelector('#editCancelUnits').onclick=()=>overlay.remove();
  panel.querySelector('#editSaveUnits').onclick=async()=>{if(!name.trim()||!units.length){alert('أضف وحدة واحدة على الأقل');return;}
- const {error}=await supabase.from('store_products').update({name:name.trim(),price:units[0].price,unit:units[0].name,updated_at:new Date().toISOString()}).eq('id',id);
+ const {error}=await activeClient.from('store_products').update({name:name.trim(),price:units[0].price,unit:units[0].name,updated_at:new Date().toISOString()}).eq('id',id);
  if(error){alert('تعذر تعديل المنتج: '+error.message);return;}
- const {error:de}=await supabase.from('store_product_units').delete().eq('product_id',id);if(de){alert('تعذر تحديث وحدات المنتج: '+de.message);return;}
- const {error:ue}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:id,sort_order:i})));if(ue){alert('تعذر حفظ وحدات المنتج: '+ue.message);return;}
+ const {error:de}=await activeClient.from('store_product_units').delete().eq('product_id',id);if(de){alert('تعذر تحديث وحدات المنتج: '+de.message);return;}
+ const {error:ue}=await activeClient.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:id,sort_order:i})));if(ue){alert('تعذر حفظ وحدات المنتج: '+ue.message);return;}
  overlay.remove();await loadData();};
 }async function toggleProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const next=!p.is_active;
- const {error}=await supabase.from('store_products').update({is_active:next,updated_at:new Date().toISOString()}).eq('id',id);
+ const {error}=await activeClient.from('store_products').update({is_active:next,updated_at:new Date().toISOString()}).eq('id',id);
  if(error){alert('تعذر تغيير ظهور المنتج: '+error.message);return;}await loadData();
 }
-async function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;const {error}=await supabase.from('store_products').delete().eq('id',id);if(error){alert('تعذر حذف المنتج: '+error.message);return;}await loadData();}
+async function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;const {error}=await activeClient.from('store_products').delete().eq('id',id);if(error){alert('تعذر حذف المنتج: '+error.message);return;}await loadData();}
 async function addCategory(name){
  const clean=name.trim();
  if(!clean){alert('اكتب اسم القسم');return;}
  if(categories.some(c=>c.name.trim()===clean)){alert('هذا القسم موجود بالفعل');return;}
  const nextOrder=categories.reduce((m,c)=>Math.max(m,Number(c.sort_order)||0),0)+1;
- const {error}=await supabase.from('store_categories').insert({name:clean,sort_order:nextOrder,is_active:true});
+ const {error}=await activeClient.from('store_categories').insert({name:clean,sort_order:nextOrder,is_active:true});
  if(error){alert('تعذر إضافة القسم: '+error.message);return;}
  document.getElementById('newCategoryName').value='';
  await loadData();
@@ -460,7 +488,7 @@ async function addCategory(name){
 async function removeCategory(id){
  const category=categories.find(c=>c.id===id);if(!category)return;
  if(!confirm('هل تريد حذف قسم "'+category.name+'"؟ المنتجات المرتبطة به لن تُحذف، لكنها ستصبح بدون قسم.'))return;
- const {error}=await supabase.from('store_categories').delete().eq('id',id);
+ const {error}=await activeClient.from('store_categories').delete().eq('id',id);
  if(error){alert('تعذر حذف القسم: '+error.message+' — قد يكون القسم مرتبطاً بمدير قسم أو بسجل آخر.');return;}
  await loadData();
 }
@@ -471,7 +499,7 @@ async function renameCategory(id){
  const category=categories.find(c=>c.id===id);if(!category)return;
  const name=prompt('اسم القسم الجديد',category.name);if(name===null)return;
  if(!name.trim()){alert('اكتب اسم القسم');return;}
- const {error}=await supabase.from('store_categories').update({name:name.trim()}).eq('id',id);
+ const {error}=await activeClient.from('store_categories').update({name:name.trim()}).eq('id',id);
  if(error){alert('تعذر تعديل اسم القسم: '+error.message);return;}
  await loadData();
 }
