@@ -364,9 +364,24 @@ document.getElementById('offerForm').addEventListener('submit',async e=>{
 });
 document.getElementById('cancelOfferEdit').addEventListener('click',resetOfferForm);
 document.getElementById('logoutButton').addEventListener('click',async()=>{
- const button=document.getElementById('logoutButton');button.disabled=true;
- try{const {error}=await supabase.auth.signOut();if(error)showMessage('تعذر تسجيل الخروج: '+error.message);}
- finally{button.disabled=false;}
+ const button=document.getElementById('logoutButton');
+ button.disabled=true;
+ button.textContent='جارٍ تسجيل الخروج...';
+ try{
+  const {error}=await supabase.auth.signOut({scope:'local'});
+  if(error)throw error;
+  activeAdminUserId=null;
+  currentRole='';
+  document.getElementById('adminApp').style.display='none';
+  document.getElementById('authGate').style.display='block';
+  document.getElementById('authMessage').style.display='none';
+  document.getElementById('managerAuthMessage').style.display='none';
+ }catch(error){
+  showMessage('تعذر تسجيل الخروج: '+(error.message||'تحقق من الاتصال ثم حاول مجدداً.'));
+ }finally{
+  button.disabled=false;
+  button.textContent='تسجيل الخروج';
+ }
 });
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
