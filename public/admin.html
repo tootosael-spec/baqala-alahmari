@@ -264,10 +264,10 @@ async function loadData(){
  }else renderManagerCategoryChecks();
  syncUnitCategory();
 }
-let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null,loggingOut=false;
+let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null,loggingOut=false,adminDataLoaded=false;
 async function enterAdmin(session){
  const user=session?.user;if(!user)return;
- if(enteringAdmin||activeAdminUserId===user.id)return;
+ if(enteringAdmin||(activeAdminUserId===user.id&&adminDataLoaded))return;
  enteringAdmin=true;
  try{
   const role=user.app_metadata?.role;
@@ -284,9 +284,17 @@ async function enterAdmin(session){
   document.querySelector('.stats').style.display=owner?'grid':'none';
   document.querySelector('.welcome h2').textContent=owner?'مرحباً بك في لوحة تحكم المالك':'لوحة مدير القسم';
   document.querySelector('.welcome p').textContent=owner?'تابع منتجات متجرك وحدّث بياناته بسهولة.':'يمكنك إدارة المنتجات التابعة للأقسام المسندة إليك فقط.';
-  try{await loadData();}catch(e){
+  try{
+   document.getElementById('statProducts').textContent='…';
+   document.getElementById('statCats').textContent='…';
+   document.getElementById('productList').innerHTML='<p class="item-meta">جارٍ تحميل بيانات الإدارة…</p>';
+   await loadData();
+   adminDataLoaded=true;
+  }catch(e){
+   adminDataLoaded=false;
    console.error('Admin data loading failed:',e);
-   document.getElementById('productList').innerHTML='<p class="item-meta" role="alert">تعذر تحميل بيانات الإدارة: '+esc(e.message||'خطأ غير معروف')+'. حدّث الصفحة أو حاول مرة أخرى.</p>';
+   document.getElementById('productList').innerHTML='<p class="item-meta" role="alert">تعذر تحميل بيانات الإدارة: '+esc(e.message||'خطأ غير معروف')+'.</p><button type="button" class="btn light" id="retryAdminLoad">إعادة تحميل البيانات</button>';
+   document.getElementById('retryAdminLoad')?.addEventListener('click',()=>enterAdmin(session));
   }
  }finally{enteringAdmin=false;}
 }
@@ -326,7 +334,7 @@ async function restoreAdminSession(){
 supabase.auth.onAuthStateChange((event,session)=>{
  if(loggingOut)return;
   if(event==='SIGNED_OUT'){
-  activeAdminUserId=null;
+  activeAdminUserId=null;adminDataLoaded=false;
   document.getElementById('adminApp').style.display='none';
   document.getElementById('authGate').style.display='block';
   return;
