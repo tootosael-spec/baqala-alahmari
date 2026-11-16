@@ -196,12 +196,13 @@ async function deleteManager(id){
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
  const managerMode=currentRole==='department_manager';
- const [c,p,u]=await Promise.all([
+ const [c,p,u,o]=await Promise.all([
   activeClient.from('store_categories').select('id,name,sort_order').order('sort_order'),
   activeClient.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
-  activeClient.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order')
+  activeClient.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order'),
+  activeClient.from('store_product_offers').select('product_id,discount_percent,starts_at,ends_at,is_active')
  ]);
- if(c.error||p.error||u.error)throw [c.error,p.error,u.error].find(Boolean);
+ if(c.error||p.error||u.error||o.error)throw [c.error,p.error,u.error,o.error].find(Boolean);
  categories=c.data||[];
  renderManagerCategoryChecks();
  document.getElementById('pCategory').innerHTML=categories.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');
@@ -214,9 +215,11 @@ async function loadData(){
  const unitsByProduct=new Map();
  (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
  const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
- products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[]}));
+ const offersByProduct=new Map((o.data||[]).map(x=>[x.product_id,x]));
+ products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[],offer:offersByProduct.get(x.id)||null}));
  document.getElementById('statProducts').textContent=products.length;
- document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
+ document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+(x.offer?' · عرض '+Number(x.offer.discount_percent)+'٪':'')+'</div></div></div><div class="actions"><button class="btn light" data-offer="'+x.id+'">'+(x.offer&&x.offer.is_active?'تعديل / إيقاف العرض':'إضافة عرض')+'</button><button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
+ document.querySelectorAll('[data-offer]').forEach(b=>b.addEventListener('click',()=>manageProductOffer(b.dataset.offer)));
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
@@ -519,7 +522,34 @@ async function editProduct(id){
  const {error:de}=await activeClient.from('store_product_units').delete().eq('product_id',id);if(de){alert('تعذر تحديث وحدات المنتج: '+de.message);return;}
  const {error:ue}=await activeClient.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:id,sort_order:i})));if(ue){alert('تعذر حفظ وحدات المنتج: '+ue.message);return;}
  overlay.remove();await loadData();};
-}async function toggleProduct(id){
+}function offerLocalValue(value,fallback){
+ const date=value?new Date(value):new Date(fallback);
+ return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);
+}
+async function manageProductOffer(id){
+ const product=products.find(x=>x.id===id);if(!product)return;
+ const existing=product.offer;
+ if(existing&&existing.is_active&&confirm('يوجد عرض لهذا المنتج. هل تريد إيقاف العرض الحالي؟ اختر «موافق» للإيقاف أو «إلغاء» لتعديله.')){
+  const {error}=await activeClient.from('store_product_offers').update({is_active:false,updated_at:new Date().toISOString()}).eq('product_id',id);
+  if(error){alert('تعذر إيقاف العرض: '+error.message);return;}
+  await loadData();return;
+ }
+ const discountText=prompt('نسبة الخصم من 1 إلى 90٪',String(existing?.discount_percent||10));
+ if(discountText===null)return;
+ const discount=Number(discountText);
+ if(!Number.isFinite(discount)||discount<1||discount>90){alert('أدخل نسبة خصم صحيحة من 1 إلى 90٪');return;}
+ const startText=prompt('بداية العرض (التاريخ والوقت)',offerLocalValue(existing?.starts_at,Date.now()));
+ if(startText===null)return;
+ const endText=prompt('نهاية العرض (التاريخ والوقت)',offerLocalValue(existing?.ends_at,Date.now()+86400000));
+ if(endText===null)return;
+ const startsAt=new Date(startText),endsAt=new Date(endText);
+ if(!Number.isFinite(startsAt.getTime())||!Number.isFinite(endsAt.getTime())||endsAt<=startsAt){alert('تأكد من صحة وقت البداية والنهاية، وأن النهاية بعد البداية.');return;}
+ const payload={product_id:id,discount_percent:discount,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),is_active:true,updated_at:new Date().toISOString()};
+ const {error}=await activeClient.from('store_product_offers').upsert(payload,{onConflict:'product_id'});
+ if(error){alert('تعذر حفظ العرض: '+error.message);return;}
+ await loadData();
+}
+async function toggleProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const next=!p.is_active;
  const {error}=await activeClient.from('store_products').update({is_active:next,updated_at:new Date().toISOString()}).eq('id',id);
