@@ -45,7 +45,7 @@ catch(primaryError){
   throw fallbackError;
  }
 }
-try{({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm'));}catch(primaryError){try{({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));}catch(fallbackError){const e=document.getElementById('loading');e.innerHTML='<b>تعذر تحميل خدمة تسجيل الدخول.</b><p class="muted">تحقق من اتصال الإنترنت أو افتح الصفحة في Chrome ثم أعد المحاولة.</p><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>';throw fallbackError;}}
+
 const URL='https://mjykxdxtjntozlnwikim.supabase.co',KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35',OWNER='daad50b9-b0bc-49ca-8ad0-4cfa7570a44b';
 const sb=createClient(URL,KEY,{auth:{storage:localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'},global:{fetch:(input,init={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);return fetch(input,{...init,signal:controller.signal}).finally(()=>clearTimeout(timer));}}});
 const $=id=>document.getElementById(id),money=n=>Number(n||0).toFixed(2)+' ريال';
