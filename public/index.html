@@ -293,7 +293,6 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
 (function(){
  const popup=document.getElementById('welcomePopup');
  if(!popup)return;
- const key='baqala_welcome_popup_last_seen_v2';
  const installButton=document.getElementById('welcomeInstall');
  const installHint=document.getElementById('welcomeInstallHint');
  let deferredInstallPrompt=null;
@@ -333,16 +332,12 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
     :'لإضافتنا: افتح قائمة Chrome ⋮ ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».';
   });
  }
- const last=Number(localStorage.getItem(key)||0);
- if(Date.now()-last>24*60*60*1000){
-  window.setTimeout(()=>{
-   popup.classList.add('show');
-   popup.setAttribute('aria-hidden','false');
-   document.body.style.overflow='hidden';
-   localStorage.setItem(key,String(Date.now()));
-   document.getElementById('welcomeShop').focus();
-  },650);
- }
+ window.setTimeout(()=>{
+  popup.classList.add('show');
+  popup.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  document.getElementById('welcomeShop').focus();
+ },650);
  document.getElementById('welcomeClose').addEventListener('click',close);
  document.getElementById('welcomeShop').addEventListener('click',()=>{
   close();
