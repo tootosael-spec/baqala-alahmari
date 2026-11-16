@@ -198,5 +198,6 @@ document.getElementById('search').addEventListener('input',renderProducts);
 await loadStore();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_product_units'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
+<!-- Store asset refresh 2026-11-16 -->
 </body>
 </html>
