@@ -197,7 +197,18 @@ async function loadStore(){
    unitsByProduct.get(x.product_id).push({...x,price:Number(x.price)});
   });
   products=(p.data||[]).map(x=>{const category=categoryNames.get(x.category_id)||'أخرى';const units=unitsByProduct.get(x.id)||[];if(/خضار/.test(category)){const rank=name=>{const n=String(name||'').replace(/\s/g,'');return /^(كيلو|الكيلو)$/.test(n)?0:/^(نصكيلو|نصفكيلو)$/.test(n)?1:/^ربعكيلو$/.test(n)?2:10;};units.sort((a,b)=>rank(a.name)-rank(b.name)||Number(a.sort_order||0)-Number(b.sort_order||0));}return {...x,category,imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units};}).filter(x=>x.units.length);
-  products.forEach(p=>{if(cart[p.id]){cart[p.id+'__'+p.units[0].id]=(cart[p.id+'__'+p.units[0].id]||0)+cart[p.id];delete cart[p.id];}});
+  const cleanCart={};
+  Object.entries(cart).forEach(([key,rawQty])=>{
+   const qty=Math.floor(Number(rawQty));
+   if(!Number.isFinite(qty)||qty<=0)return;
+   const legacyProduct=products.find(p=>p.id===key);
+   if(legacyProduct){const unit=legacyProduct.units[0];if(unit){const newKey=legacyProduct.id+'__'+unit.id;cleanCart[newKey]=(cleanCart[newKey]||0)+qty;}return;}
+   const [productId,unitId]=key.split('__');
+   const product=products.find(p=>p.id===productId);
+   const unit=product?.units.find(u=>u.id===unitId);
+   if(product&&unit){cleanCart[key]=(cleanCart[key]||0)+qty;}
+  });
+  cart=cleanCart;
   persistCart();
   if(s.error) console.error('Store settings loading failed:',s.error);
   settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30),headerImageUrl:s.data?.header_image_url||''};
@@ -221,7 +232,7 @@ function cartEntries(){return Object.entries(cart).map(([key,qty])=>{const [prod
 function subtotal(){return cartEntries().reduce((s,x)=>s+x.u.price*x.qty,0);}
 function actualDeliveryFee(){return !cartEntries().length||subtotal()>=settings.freeDeliveryThreshold?0:settings.deliveryFee;}
 function total(){return subtotal()+actualDeliveryFee();}
-function renderCartSummary(){const n=Object.values(cart).reduce((a,b)=>a+b,0);document.getElementById('cartTotal').textContent=money(total());document.getElementById('cartCount').textContent=n+' وحدات في السلة';document.getElementById('cartBadge').textContent=n;}
+function renderCartSummary(){const n=cartEntries().reduce((sum,item)=>sum+item.qty,0);document.getElementById('cartTotal').textContent=money(total());document.getElementById('cartCount').textContent=n+' وحدات في السلة';document.getElementById('cartBadge').textContent=n;}
 window.openCart=function(){renderCart();document.getElementById('cartModal').style.display='block';};
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
 function renderCart(){const list=cartEntries();document.getElementById('cartItems').innerHTML=list.length?list.map(x=>'<div class="line-item"><div><b>'+esc(x.p.name)+' — '+esc(x.u.name)+'</b><div class="line-sub">'+money(x.u.price)+' لكل '+esc(x.u.name)+'</div></div><div class="qty-control"><button data-dec="'+esc(x.key)+'">−</button><b>'+x.qty+'</b><button data-inc="'+esc(x.key)+'">+</button></div><strong>'+money(x.u.price*x.qty)+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong></div>';document.getElementById('deliveryFeeRow').textContent=actualDeliveryFee()===0?'مجاني':money(actualDeliveryFee());document.getElementById('modalTotal').textContent=money(total());document.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.dec,-1)));document.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.inc,1)));}
