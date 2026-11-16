@@ -100,6 +100,13 @@
     @media(min-width:900px){.products{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.header-inner{padding-bottom:42px}.hero{padding-top:42px}.product-art{height:155px}}
     @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
   </style>
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
 </head>
 <body>
   <header class="site-header">
@@ -253,5 +260,9 @@ await loadStore();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_product_units'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
 <!-- Store asset refresh 2026-11-16 -->
+
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(error=>console.warn('PWA service worker registration failed:',error)));}
+</script>
 </body>
 </html>
