@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v9-store-recovery-20261116';
+const CACHE_NAME='baqala-pwa-v10-native-catalog-20261116';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
