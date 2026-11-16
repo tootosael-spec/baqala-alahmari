@@ -12,11 +12,14 @@ export default {
       (url.pathname === "/" || url.pathname === "/index.html" || isMarketAlias);
 
     if (isStorefrontPage) {
+      const accessCheckController = new AbortController();
+      const accessCheckTimeout = setTimeout(() => accessCheckController.abort(), 1800);
       try {
         const check = await fetch(ACCESS_CHECK_URL, {
           method: "GET",
           headers: { "Accept": "application/json" },
           cache: "no-store",
+          signal: accessCheckController.signal,
         });
         if (check.ok) {
           const access = await check.json();
@@ -31,7 +34,9 @@ export default {
           }
         }
       } catch (error) {
-        // Fail open during a temporary central-service outage to protect existing storefront availability.
+        // Fail open on errors or timeout to keep the storefront available.
+      } finally {
+        clearTimeout(accessCheckTimeout);
       }
     }
 
