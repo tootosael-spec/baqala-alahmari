@@ -241,6 +241,16 @@ async function loadData(){
  syncUnitCategory();
 }
 let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null;
+function showAuthGate(message=''){
+ document.getElementById('adminApp').style.display='none';
+ document.getElementById('authGate').style.display='block';
+ if(message)showMessage(message);
+}
+function clearAdminState(){
+ activeAdminUserId=null;currentRole='';
+ document.getElementById('adminApp').style.display='none';
+ document.getElementById('authGate').style.display='block';
+}
 async function enterAdmin(session){
  const user=session?.user;if(!user)return;
  if(enteringAdmin||activeAdminUserId===user.id)return;
@@ -248,7 +258,8 @@ async function enterAdmin(session){
  try{
   const role=user.app_metadata?.role;
   if(!['store_admin','department_manager'].includes(role)){
-   activeAdminUserId=null;await supabase.auth.signOut();showMessage('هذا الحساب غير مخوّل لإدارة المتجر.');return;
+   await supabase.auth.signOut({scope:'local'});
+   clearAdminState();showMessage('هذا الحساب غير مخوّل لإدارة المتجر.');return;
   }
   currentRole=role;activeAdminUserId=user.id;const owner=role==='store_admin';
   document.getElementById('authGate').style.display='none';
@@ -272,41 +283,45 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  btn.disabled=true;btn.textContent='جارٍ الدخول...';
  try{
   const {data,error}=await supabase.auth.signInWithPassword({email,password});
-  if(error){showMessage('تعذر تسجيل الدخول: '+error.message);return;}
+  if(error)throw error;
   if(data.session)await enterAdmin(data.session);
- }catch(error){showMessage('تعذر إكمال تسجيل الدخول. تحقق من الاتصال ثم حاول مجدداً.');console.error(error);}
+  else showMessage('لم يتم إنشاء جلسة دخول. تحقق من بيانات الحساب وحاول مجدداً.');
+ }catch(error){showAuthGate('تعذر تسجيل الدخول: '+(error.message||'تحقق من الاتصال ثم حاول مجدداً.'));console.error(error);}
  finally{btn.disabled=false;btn.textContent='دخول لوحة الإدارة';}
 });
 document.getElementById('managerCodeForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=document.getElementById('managerLoginButton'),message=document.getElementById('managerAuthMessage');
  btn.disabled=true;btn.textContent='جارٍ التحقق...';message.style.display='none';
+ const controller=new AbortController(),timeoutId=setTimeout(()=>controller.abort(),15000);
  try{
-  const response=await fetch(MANAGER_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLIC_KEY,'Authorization':'Bearer '+SUPABASE_PUBLIC_KEY},body:JSON.stringify({action:'login',code:document.getElementById('managerCode').value.trim()})});
-  const result=await response.json().catch(()=>({error:'تعذر قراءة الاستجابة'}));
-  if(!response.ok||!result.session)throw new Error(result.error||'الكود غير صحيح');
+  const response=await fetch(MANAGER_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLIC_KEY,'Authorization':'Bearer '+SUPABASE_PUBLIC_KEY},body:JSON.stringify({action:'login',code:document.getElementById('managerCode').value.trim()}),signal:controller.signal});
+  const result=await response.json().catch(()=>({error:'تعذر قراءة استجابة الخادم'}));
+  if(!response.ok||!result.session)throw new Error(result.error||'الكود غير صحيح أو لم يعد صالحاً');
   const {error}=await supabase.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
-  if(error)throw error;await enterAdmin({user:result.user,access_token:result.session.access_token});
- }catch(err){message.textContent=err.message||'تعذر تسجيل الدخول';message.style.display='block';}
- finally{btn.disabled=false;btn.textContent='دخول مدير القسم';}
+  if(error)throw error;
+  await enterAdmin({user:result.user,access_token:result.session.access_token});
+ }catch(err){
+  message.textContent=err.name==='AbortError'?'استغرق التحقق وقتاً أطول من المعتاد. تحقق من الاتصال ثم أعد المحاولة.':(err.message||'تعذر تسجيل الدخول');
+  message.style.display='block';
+ }finally{clearTimeout(timeoutId);btn.disabled=false;btn.textContent='دخول مدير القسم';}
 });
 async function restoreAdminSession(){
  try{
   const {data:{session},error}=await supabase.auth.getSession();
   if(error)throw error;
   if(session)await enterAdmin(session);
-  else{document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}
- }catch(error){showMessage('تعذر استعادة جلسة الدخول: '+(error.message||'تحقق من الاتصال ثم أعد المحاولة.'));}
- finally{adminSessionReady=true;}
+  else showAuthGate();
+ }catch(error){
+  console.error('Session restore failed:',error);
+  showAuthGate('تعذر التحقق من جلسة الدخول بسبب الاتصال. أعد المحاولة أو حدّث الصفحة.');
+ }finally{adminSessionReady=true;}
 }
 supabase.auth.onAuthStateChange((event,session)=>{
  if(event==='SIGNED_OUT'){
-  activeAdminUserId=null;
-  document.getElementById('adminApp').style.display='none';
-  document.getElementById('authGate').style.display='block';
+  clearAdminState();
   return;
  }
- if(!session)return;
- if((event==='SIGNED_IN'||event==='INITIAL_SESSION')&&adminSessionReady){
+ if(event==='SIGNED_IN'&&session&&adminSessionReady){
   queueMicrotask(()=>enterAdmin(session));
  }
 });
@@ -319,9 +334,18 @@ document.getElementById('pName').addEventListener('input',refreshSuggestedEmoji)
 document.getElementById('pCategory').addEventListener('change',refreshSuggestedEmoji);
 await restoreAdminSession();
 document.getElementById('logoutButton').addEventListener('click',async()=>{
- const button=document.getElementById('logoutButton');button.disabled=true;
- try{const {error}=await supabase.auth.signOut();if(error)showMessage('تعذر تسجيل الخروج: '+error.message);}
- finally{button.disabled=false;}
+ const button=document.getElementById('logoutButton');button.disabled=true;button.textContent='جارٍ تسجيل الخروج...';
+ try{
+  const {error}=await supabase.auth.signOut({scope:'local'});
+  if(error)throw error;
+  clearAdminState();
+  document.getElementById('loginPassword').value='';
+  document.getElementById('managerCode').value='';
+  document.getElementById('authMessage').style.display='none';
+  document.getElementById('managerAuthMessage').style.display='none';
+ }catch(error){
+  alert('تعذر تسجيل الخروج: '+(error.message||'تحقق من الاتصال ثم حاول مجدداً.'));
+ }finally{button.disabled=false;button.textContent='تسجيل الخروج';}
 });
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
