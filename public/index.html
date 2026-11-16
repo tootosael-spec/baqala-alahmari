@@ -461,7 +461,12 @@ window.sendOrder=async function(){
  const list=cartEntries();
  if(!list.length){alert('السلة فارغة');return;}
  if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}
- if(!isOrderAcceptanceOpen()){alert('نعتذر، استقبال الطلبات مغلق حالياً. نعود لاستقبال طلباتكم في الوقت المحدد.');return;}
+ if(!isOrderAcceptanceOpen()){
+  const formatOrderTime=value=>{const [hour,minute]=value.split(':').map(Number);return new Intl.DateTimeFormat('ar-SA',{hour:'numeric',minute:'2-digit',hourCycle:'h12',timeZone:'UTC'}).format(new Date(Date.UTC(2000,0,1,hour,minute)));};
+  const hoursMessage=settings.orderStart&&settings.orderEnd?` وقت استقبال الطلبات والتوصيل من ${formatOrderTime(settings.orderStart)} إلى ${formatOrderTime(settings.orderEnd)}.`:'';
+  alert('نعتذر، استقبال الطلبات والتوصيل مغلق حالياً.'+hoursMessage);
+  return;
+ }
  const wa=window.open('about:blank','_blank');
  const token=crypto.randomUUID()+crypto.randomUUID();
  const note=document.getElementById('orderNote').value.trim();
