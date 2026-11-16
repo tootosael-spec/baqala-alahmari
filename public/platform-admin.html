@@ -116,6 +116,18 @@ async function review(id,approve,btn){
 }
 $('authForm').addEventListener('submit',async e=>{e.preventDefault();$('loginBtn').disabled=true;const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){message($('authMsg'),error.message,'bad');return}await show()});
 $('signupBtn').addEventListener('click',async()=>{if($('email').value.trim().toLowerCase()!=='baqalaalahmari@gmail.com'){message($('authMsg'),'إنشاء حساب مدير المنصة مخصص للبريد المعتمد فقط.','bad');return}const {data,error}=await sb.auth.signUp({email:$('email').value.trim(),password:$('password').value});if(error){message($('authMsg'),error.message,'bad');return}if(data.session){await show()}else{message($('authMsg'),'تم إنشاء الحساب. افتح رسالة التأكيد في بريدك ثم ارجع وسجّل الدخول.','ok')}});
+$('storeForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('storeForm').querySelector('button[type="submit"]');btn.disabled=true;
+ const name=$('storeName').value.trim(),slug=$('storeSlug').value.trim().toLowerCase(),url=$('storeUrl').value.trim()||null,ownerEmail=$('ownerEmail').value.trim().toLowerCase()||null;
+ const {data:store,error}=await sb.from('stores').insert({name,slug,website_url:url,owner_email:ownerEmail,operational_status:'active',enforcement_enabled:false}).select('id').single();
+ if(error){btn.disabled=false;alert('تعذرت إضافة البقالة: '+error.message);return}
+ const {error:subError}=await sb.from('subscriptions').insert({store_id:store.id,plan_name:'monthly',amount:50,currency:'SAR',billing_interval_months:1,status:'pending_payment'});
+ if(subError){await sb.from('stores').delete().eq('id',store.id);btn.disabled=false;alert('تعذر إنشاء الاشتراك: '+subError.message);return}
+ await sb.from('subscription_events').insert({store_id:store.id,actor_user_id:(await sb.auth.getUser()).data.user.id,event_type:'store_created',details:{name,slug}});
+ let note='تمت إضافة البقالة بنجاح.';
+ if(ownerEmail){const {error:linkError}=await sb.functions.invoke('assign-store-owner',{body:{store_id:store.id,email:ownerEmail}});if(linkError)note+=' لم يتم ربط حساب المالك بعد؛ يجب أن ينشئ حساباً في صفحة الاشتراك أولاً.';else note+=' وتم ربط حساب المالك.'}
+ $('storeForm').reset();btn.disabled=false;await loadAll();alert(note);
+});
 $('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();await show()});
 sb.auth.onAuthStateChange(()=>setTimeout(()=>show(),0));
 show();
