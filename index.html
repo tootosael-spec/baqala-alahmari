@@ -131,8 +131,9 @@
       <div class="welcome-mark" aria-hidden="true">🛒</div>
       <h2 id="welcomeTitle">يا هلا ومرحبا بك 🌿</h2>
       <p id="welcomeDescription">نورت بقالة الأحمري! تسوّق احتياجاتك اليومية بكل سهولة، واختر منتجاتك وسنستقبل طلبك مباشرة عبر واتساب.</p>
+      <button class="welcome-cta" id="welcomeInstall" type="button" style="margin-bottom:10px;background:linear-gradient(110deg,#238653,#36a66b)">📲 أضفنا كتطبيق على شاشتك</button>
       <button class="welcome-cta" id="welcomeShop" type="button">ابدأ التسوق الآن</button>
-      <small class="welcome-foot">نسعد بخدمتك دائماً 💚</small>
+      <small class="welcome-foot" id="welcomeInstallHint">ثبّت المتجر لتصل إليه بسرعة من شاشة جوالك 💚</small>
     </div>
   </div>
 
@@ -293,11 +294,45 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
  const popup=document.getElementById('welcomePopup');
  if(!popup)return;
  const key='baqala_welcome_popup_last_seen';
+ const installButton=document.getElementById('welcomeInstall');
+ const installHint=document.getElementById('welcomeInstallHint');
+ let deferredInstallPrompt=null;
+ const isInstalled=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
  const close=()=>{
   popup.classList.remove('show');
   popup.setAttribute('aria-hidden','true');
   document.body.style.overflow='';
  };
+ if(isInstalled()){
+  installButton.hidden=true;
+  installHint.textContent='التطبيق مثبت عندك بالفعل، نسعد بخدمتك دائماً 💚';
+ }else{
+  window.addEventListener('beforeinstallprompt',event=>{
+   event.preventDefault();
+   deferredInstallPrompt=event;
+   installButton.hidden=false;
+  });
+  window.addEventListener('appinstalled',()=>{
+   deferredInstallPrompt=null;
+   installButton.hidden=true;
+   installHint.textContent='تمت إضافة بقالة الأحمري إلى شاشة جوالك، أهلاً بك 💚';
+  });
+  installButton.addEventListener('click',async()=>{
+   if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    if(choice&&choice.outcome==='accepted'){
+     installButton.hidden=true;
+     installHint.textContent='رائع! جارٍ إضافة التطبيق إلى شاشتك 💚';
+    }
+    return;
+   }
+   installHint.textContent=/iphone|ipad|ipod/i.test(navigator.userAgent)
+    ?'لإضافتنا: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».'
+    :'لإضافتنا: افتح قائمة Chrome ⋮ ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».';
+  });
+ }
  const last=Number(localStorage.getItem(key)||0);
  if(Date.now()-last>24*60*60*1000){
   window.setTimeout(()=>{
