@@ -16,7 +16,7 @@
 <div class="layout">
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
-<div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><label class="field"><span>وحدات البيع والأسعار</span><textarea id="pUnits" required placeholder="حبة | 1\nكرتون | 10\nباكيت | 5"></textarea></label><p class="item-meta">اكتب كل وحدة في سطر مستقل بهذا الشكل: اسم الوحدة | السعر. مثال: حبة | 1</p>
+<div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><label class="field"><span>وحدات البيع والأسعار</span><textarea id="pUnits" required placeholder="حبة | 1\nكرتون | 10\nباكيت | 5"></textarea></label><p class="item-meta">اكتب كل وحدة في سطر مستقل بهذا الشكل: اسم الوحدة | السعر. مثال: حبة | 1. في قسم الخضار والفواكه أدخل سعر كيلو واحد فقط (كيلو | 8)، وسيُحسب نص الكيلو وربع الكيلو تلقائياً.</p>
 <label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" capture="environment" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
 <div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
@@ -42,6 +42,7 @@ let products=[],categories=[],settings={};
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function parseUnits(raw){return raw.split(/\r?\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
+function prepareUnits(raw,categoryId){const units=parseUnits(raw);const category=categories.find(c=>c.id===categoryId)?.name||'';if(!/خضار/.test(category))return units;const kilo=units.find(u=>/^(كيلو|الكيلو)$/i.test(u.name.trim()))||units[0];if(!kilo)return [];const price=Math.round(kilo.price*100)/100;return [{name:'كيلو',price},{name:'نص كيلو',price:Math.round(price/2*100)/100},{name:'ربع كيلو',price:Math.round(price/4*100)/100}];}
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
  const [p,c,s,ordersTotal,ordersToday]=await Promise.all([
@@ -89,7 +90,7 @@ document.getElementById('logoutButton').addEventListener('click',()=>supabase.au
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
- const units=parseUnits(document.getElementById('pUnits').value);
+ const units=prepareUnits(document.getElementById('pUnits').value,category_id);
  if(!name||!units.length){alert('أدخل اسم المنتج ووحدة واحدة على الأقل بصيغة: حبة | 1');return;}
  if(manualImage&&!/^https?:\/\//i.test(manualImage)){alert('أدخل رابط صورة صحيحاً');return;}
  if(imageFile&&(!imageFile.type.startsWith('image/')||imageFile.size>5*1024*1024)){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');return;}
