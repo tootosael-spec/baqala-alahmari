@@ -36,7 +36,7 @@
 <div class="hint">المنتجات والإعدادات محفوظة الآن في قاعدة بيانات Supabase المشتركة. الدخول محمي بحساب صاحب المتجر وسياسات RLS. رفع الصور متاح عبر رابط مباشر حالياً، وتوليد الصور بالذكاء الاصطناعي يحتاج ربط خدمة مستقلة.</div>
 </section>
 </div>
-<section class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">يمكنك تغيير اسم القسم دون التأثير على المنتجات المرتبطة به.</p><div id="categoryList"></div></section>
+<section class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">أضف الأقسام أو عدّل أسماءها أو احذفها من هنا. حذف القسم لا يحذف المنتجات المرتبطة به.</p><form id="addCategoryForm" class="row" style="align-items:end"><label class="field"><span>اسم القسم الجديد</span><input id="newCategoryName" maxlength="60" placeholder="مثال: التموينات" required></label><button class="btn primary" type="submit" style="margin-bottom:11px">＋ إضافة قسم</button></form><div id="categoryList"></div></section>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
 
@@ -55,7 +55,7 @@ try {
   }
 }
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
-const categoriesFallback=['الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
+
 let products=[],categories=[],settings={};
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -85,8 +85,9 @@ async function loadData(){
  categories=c.data||[];
  document.getElementById('statCats').textContent=categories.length;
  document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
- document.getElementById('categoryList').innerHTML=categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button></div>').join('');
+ document.getElementById('categoryList').innerHTML=categories.length?categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><div class="actions"><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button><button class="btn danger" data-delete-category="'+c.id+'">حذف القسم</button></div></div>').join(''):'<p class="item-meta">لا توجد أقسام. أضف قسماً جديداً من الأعلى.</p>';
  document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
+ document.querySelectorAll('[data-delete-category]').forEach(b=>b.addEventListener('click',()=>removeCategory(b.dataset.deleteCategory)));
  if(p.error||u.error||s.error) throw (p.error||u.error||s.error);
  const unitsByProduct=new Map();
  (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
@@ -208,6 +209,26 @@ async function editProduct(id){
  if(error){alert('تعذر تغيير ظهور المنتج: '+error.message);return;}await loadData();
 }
 async function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;const {error}=await supabase.from('store_products').delete().eq('id',id);if(error){alert('تعذر حذف المنتج: '+error.message);return;}await loadData();}
+async function addCategory(name){
+ const clean=name.trim();
+ if(!clean){alert('اكتب اسم القسم');return;}
+ if(categories.some(c=>c.name.trim()===clean)){alert('هذا القسم موجود بالفعل');return;}
+ const nextOrder=categories.reduce((m,c)=>Math.max(m,Number(c.sort_order)||0),0)+1;
+ const {error}=await supabase.from('store_categories').insert({name:clean,sort_order:nextOrder,is_active:true});
+ if(error){alert('تعذر إضافة القسم: '+error.message);return;}
+ document.getElementById('newCategoryName').value='';
+ await loadData();
+}
+async function removeCategory(id){
+ const category=categories.find(c=>c.id===id);if(!category)return;
+ if(!confirm('هل تريد حذف قسم "'+category.name+'"؟ المنتجات المرتبطة به لن تُحذف، لكنها ستصبح بدون قسم.'))return;
+ const {error}=await supabase.from('store_categories').delete().eq('id',id);
+ if(error){alert('تعذر حذف القسم: '+error.message);return;}
+ await loadData();
+}
+document.getElementById('addCategoryForm').addEventListener('submit',async e=>{
+ e.preventDefault();await addCategory(document.getElementById('newCategoryName').value);
+});
 async function renameCategory(id){
  const category=categories.find(c=>c.id===id);if(!category)return;
  const name=prompt('اسم القسم الجديد',category.name);if(name===null)return;
