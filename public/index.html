@@ -189,7 +189,6 @@ async function loadStore(){
   ]);
   if(c.error) throw c.error;
   categories=c.data||[];
-  renderCats();
   if(p.error||u.error){
    console.error('Products loading failed:',p.error||u.error);
    document.getElementById('products').innerHTML='<div class="empty-state">الأقسام متاحة، لكن تعذر تحميل المنتجات حالياً. أعد تحميل الصفحة بعد قليل.</div>';
@@ -202,6 +201,7 @@ async function loadStore(){
    unitsByProduct.get(x.product_id).push({...x,price:Number(x.price)});
   });
   products=(p.data||[]).map(x=>{const category=categoryNames.get(x.category_id)||'أخرى';const units=unitsByProduct.get(x.id)||[];if(/خضار/.test(category)){const rank=name=>{const n=String(name||'').replace(/\s/g,'');return /^(كيلو|الكيلو)$/.test(n)?0:/^(نصكيلو|نصفكيلو)$/.test(n)?1:/^ربعكيلو$/.test(n)?2:10;};units.sort((a,b)=>rank(a.name)-rank(b.name)||Number(a.sort_order||0)-Number(b.sort_order||0));}return {...x,category,imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units};}).filter(x=>x.units.length);
+  renderCats();
   const cleanCart={};
   Object.entries(cart).forEach(([key,rawQty])=>{
    const qty=Math.floor(Number(rawQty));
@@ -229,7 +229,7 @@ async function loadStore(){
   document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً. الأقسام محفوظة ولم يتم حذفها.</div>';
  }
 }
-function renderCats(){const names=['الكل',...categories.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
+function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;renderCats();renderProducts();}
 function renderProducts(){const q=document.getElementById('search').value.trim().toLowerCase();const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));document.getElementById('productCount').textContent=list.length+' منتج';document.getElementById('products').innerHTML=list.length?list.map(p=>{const first=p.units.find(u=>/^(كيلو|الكيلو)$/i.test(String(u.name).trim()))||p.units[0];return '<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><label class="field"><span>اختر الوحدة</span><select data-unit-select="'+esc(p.id)+'">'+p.units.map(u=>'<option value="'+esc(u.id)+'" data-price="'+u.price+'" '+(u.id===first.id?'selected':'')+'>'+esc(u.name)+' — '+money(u.price)+'</option>').join('')+'</select></label><div class="product-foot"><strong class="product-price" data-unit-price="'+esc(p.id)+'">'+money(first.price)+' / '+esc(first.name)+'</strong><div class="product-actions"><button class="add-btn" data-add="'+esc(p.id)+'">＋ أضف</button><div class="qty-stepper" data-stepper="'+esc(p.id)+'" hidden><button type="button" data-minus="'+esc(p.id)+'" aria-label="تقليل الكمية">−</button><strong data-qty="'+esc(p.id)+'">1</strong><button type="button" data-plus="'+esc(p.id)+'" aria-label="زيادة الكمية">+</button></div></div></div></article>';}).join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const sel=document.querySelector('[data-unit-select="'+b.dataset.add+'"]');addCart(b.dataset.add,sel?.value);}));
 document.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.plus,sel=document.querySelector('[data-unit-select="'+id+'"]');addCart(id,sel?.value);}));
