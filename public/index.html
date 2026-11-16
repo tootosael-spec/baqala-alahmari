@@ -8,9 +8,8 @@
   <title>بقالة الأحمري | تسوق يومك</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="preconnect" href="https://mjykxdxtjntozlnwikim.supabase.co" crossorigin>
   <style>
     :root{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;color-scheme:light;--forest:#123d2b;--leaf:#238653;--mint:#eaf5ed;--ink:#18251e;--muted:#728078}
     *{box-sizing:border-box}
@@ -269,7 +268,9 @@ function updateReorderButton(){const button=document.getElementById('reorderButt
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function persistCart(){try{localStorage.setItem('baqala_cart',JSON.stringify(cart));}catch(error){console.warn('Could not save cart locally:',error);}}
+function saveStoreCache(){try{localStorage.setItem('baqala_store_catalog_v1',JSON.stringify({version:1,savedAt:Date.now(),categories,products,settings}));}catch(error){console.warn('Could not save local store catalog cache:',error);}}
 async function loadStore(){
+ try{const saved=JSON.parse(localStorage.getItem('baqala_store_catalog_v1')||'null');if(saved&&saved.version===1&&Array.isArray(saved.categories)&&Array.isArray(saved.products)){categories=saved.categories;products=saved.products;settings={...settings,...(saved.settings||{})};const headerEl=document.querySelector('.site-header');if(headerEl&&settings.headerImageUrl)headerEl.style.setProperty('--header-image','url('+JSON.stringify(settings.headerImageUrl)+')');document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';document.querySelector('.hero h2 span').textContent=settings.name||'بقالة الأحمري';renderCats();renderProducts();renderCartSummary();window.__BAQALA_STORE_READY__=true;}}catch(error){console.warn('Saved store catalog cache could not be read:',error);}
  const categoriesRequest=storeApi('store_categories',{select:'id,name,sort_order',is_active:'eq.true',order:'sort_order.asc'});
  const productsRequest=storeApi('store_products',{select:'id,name,category_id,price,unit,emoji,image_url,sort_order',is_active:'eq.true',order:'sort_order.asc,name.asc'});
  const unitsRequest=storeApi('store_product_units',{select:'id,product_id,name,price,is_active,sort_order',is_active:'eq.true',order:'sort_order.asc'});
@@ -280,13 +281,14 @@ async function loadStore(){
  if(c.status==='rejected')console.error('Categories loading failed:',c.reason);
  if(p.status==='fulfilled'){
   const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
-  products=(p.value||[]).map(x=>({...x,category:categoryNames.get(x.category_id)||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units:[{id:'legacy-'+x.id,product_id:x.id,name:x.unit||'حبة',price:Number(x.price),is_active:true,sort_order:0}],offer:null}));
+  const previousProducts=new Map(products.map(item=>[item.id,item]));
+  products=(p.value||[]).map(x=>{const previous=previousProducts.get(x.id);return {...x,category:categoryNames.get(x.category_id)||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units:previous?.units?.length?previous.units:[{id:'legacy-'+x.id,product_id:x.id,name:x.unit||'حبة',price:Number(x.price),is_active:true,sort_order:0}],offer:previous?.offer||null};});
  }else{
   console.error('Products loading failed:',p.reason);
   products=[];
  }
  renderCats();
- if(p.status==='fulfilled')renderProducts();
+ if(p.status==='fulfilled'){renderProducts();saveStoreCache();}
  else document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً. أعد المحاولة بعد قليل.</div>';
  window.__BAQALA_STORE_READY__=true;
  unitsRequest.then(data=>{
@@ -318,20 +320,23 @@ async function loadStore(){
   persistCart();
   renderProducts();
   renderCartSummary();
+  saveStoreCache();
  }).catch(error=>console.warn('Product units could not be loaded; base product units remain available:',error));
  settingsRequest.then(data=>{
   const row=Array.isArray(data)?data[0]:data;
-  settings={name:row?.store_name||'بقالة الأحمري',phone:row?.whatsapp_number||'',deliveryFee:Number(row?.delivery_fee||0),freeDeliveryThreshold:Number(row?.free_delivery_threshold??30),headerImageUrl:row?.header_image_url||''};
+  settings={name:row?.store_name||settings.name||'بقالة الأحمري',phone:row?.whatsapp_number??settings.phone??'',deliveryFee:Number(row?.delivery_fee??settings.deliveryFee??0),freeDeliveryThreshold:Number(row?.free_delivery_threshold??settings.freeDeliveryThreshold??30),headerImageUrl:row?.header_image_url??settings.headerImageUrl??''};
   const headerEl=document.querySelector('.site-header');
   headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
   document.getElementById('storeTitle').textContent=settings.name;
   document.querySelector('.hero h2 span').textContent=settings.name;
   renderCartSummary();
+  saveStoreCache();
  }).catch(error=>console.warn('Store settings could not be loaded:',error));
  offersRequest.then(data=>{
   const offersByProduct=new Map((data||[]).map(offer=>[offer.product_id,{...offer,discount_percent:Number(offer.discount_percent)}]));
   products=products.map(product=>({...product,offer:offersByProduct.get(product.id)||null}));
   renderProducts();
+  saveStoreCache();
  }).catch(error=>console.warn('Product offers could not be loaded:',error));
 }
 function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
@@ -345,7 +350,7 @@ function renderProducts(){
  document.getElementById('products').innerHTML=list.length?list.map(p=>{
   const first=p.units.find(u=>/^(كيلو|الكيلو)$/i.test(String(u.name).trim()))||p.units[0];
   const isFavorite=favorites.has(p.id);
-  return '<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+(currentOffer(p)?'<span class="offer-badge" aria-label="عرض اليوم، خصم '+Number(currentOffer(p).discount_percent)+' بالمئة"><span class="offer-badge-text" aria-hidden="true"><small>خصم</small><b>'+Number(currentOffer(p).discount_percent).toLocaleString("ar-SA")+'٪</b></span></span>':'')+'<button class="favorite-btn '+(isFavorite?'active':'')+'" type="button" data-favorite="'+esc(p.id)+'" aria-label="'+(isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة')+'" aria-pressed="'+isFavorite+'">'+(isFavorite?'♥':'♡')+'</button></div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><label class="field"><span>اختر الوحدة</span><div class="unit-select-wrap"><select aria-label="اختر الوحدة" data-unit-select="'+esc(p.id)+'">'+p.units.map(u=>'<option value="'+esc(u.id)+'" data-price="'+u.price+'" '+(u.id===first.id?'selected':'')+'>'+unitOptionLabel(p,u)+'</option>').join('')+'</select><div class="unit-select-marquee" aria-hidden="true"><span data-unit-marquee="'+esc(p.id)+'">'+unitOptionLabel(p,first)+'</span></div></div></label><div class="product-foot"><strong class="product-price" data-unit-price="'+esc(p.id)+'">'+priceMarkup(p,first)+' / '+esc(first.name)+'</strong><div class="product-actions"><button class="add-btn" data-add="'+esc(p.id)+'">＋ أضف</button><div class="qty-stepper" data-stepper="'+esc(p.id)+'" hidden><button type="button" data-minus="'+esc(p.id)+'" aria-label="تقليل الكمية">−</button><strong data-qty="'+esc(p.id)+'">1</strong><button type="button" data-plus="'+esc(p.id)+'" aria-label="زيادة الكمية">+</button></div></div></div></article>';
+  return '<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+(currentOffer(p)?'<span class="offer-badge" aria-label="عرض اليوم، خصم '+Number(currentOffer(p).discount_percent)+' بالمئة"><span class="offer-badge-text" aria-hidden="true"><small>خصم</small><b>'+Number(currentOffer(p).discount_percent).toLocaleString("ar-SA")+'٪</b></span></span>':'')+'<button class="favorite-btn '+(isFavorite?'active':'')+'" type="button" data-favorite="'+esc(p.id)+'" aria-label="'+(isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة')+'" aria-pressed="'+isFavorite+'">'+(isFavorite?'♥':'♡')+'</button></div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><label class="field"><span>اختر الوحدة</span><div class="unit-select-wrap"><select aria-label="اختر الوحدة" data-unit-select="'+esc(p.id)+'">'+p.units.map(u=>'<option value="'+esc(u.id)+'" data-price="'+u.price+'" '+(u.id===first.id?'selected':'')+'>'+unitOptionLabel(p,u)+'</option>').join('')+'</select><div class="unit-select-marquee" aria-hidden="true"><span data-unit-marquee="'+esc(p.id)+'">'+unitOptionLabel(p,first)+'</span></div></div></label><div class="product-foot"><strong class="product-price" data-unit-price="'+esc(p.id)+'">'+priceMarkup(p,first)+' / '+esc(first.name)+'</strong><div class="product-actions"><button class="add-btn" data-add="'+esc(p.id)+'">＋ أضف</button><div class="qty-stepper" data-stepper="'+esc(p.id)+'" hidden><button type="button" data-minus="'+esc(p.id)+'" aria-label="تقليل الكمية">−</button><strong data-qty="'+esc(p.id)+'">1</strong><button type="button" data-plus="'+esc(p.id)+'" aria-label="زيادة الكمية">+</button></div></div></div></article>';
  }).join(''):'<div class="empty-state"><div class="empty-icon">'+(showFavorites?'♡':'🔎')+'</div><strong>'+(showFavorites?'قائمة المفضلة فارغة':'ما لقينا هذا المنتج')+'</strong><div class="muted">'+(showFavorites?'اضغط على القلب في أي منتج لإضافته إلى المفضلة.':'جرّب كلمة بحث ثانية أو اختر قسماً آخر.')+'</div></div>';
  document.querySelectorAll('[data-favorite]').forEach(b=>b.addEventListener('click',()=>toggleFavorite(b.dataset.favorite)));
  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const sel=document.querySelector('[data-unit-select="'+b.dataset.add+'"]');addCart(b.dataset.add,sel?.value);}));
