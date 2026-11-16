@@ -501,7 +501,7 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
  status.textContent=header_image_url?'تم حفظ صورة الخلفية بنجاح.':'تمت إزالة صورة الخلفية.';
  await loadData();
 });
-async async function changeProductImage(id){
+async function changeProductImage(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.style.display='none';document.body.appendChild(input);
  input.addEventListener('change',async()=>{
