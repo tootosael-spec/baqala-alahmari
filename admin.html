@@ -200,7 +200,7 @@ async function loadData(){
   activeClient.from('store_categories').select('id,name,sort_order').order('sort_order'),
   activeClient.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
   activeClient.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order'),
-  activeClient.from('store_product_offers').select('product_id,discount_percent,starts_at,ends_at,is_active')
+  activeClient.from('store_product_offers').select('product_id,discount_percent,starts_at,ends_at,is_active,created_by')
  ]);
  if(c.error||p.error||u.error||o.error)throw [c.error,p.error,u.error,o.error].find(Boolean);
  categories=c.data||[];
@@ -218,7 +218,7 @@ async function loadData(){
  const offersByProduct=new Map((o.data||[]).map(x=>[x.product_id,x]));
  products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[],offer:offersByProduct.get(x.id)||null}));
  document.getElementById('statProducts').textContent=products.length;
- document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+(x.offer?' · عرض '+Number(x.offer.discount_percent)+'٪':'')+'</div></div></div><div class="actions"><button class="btn light" data-offer="'+x.id+'">'+(x.offer&&x.offer.is_active?'تعديل / إيقاف العرض':'إضافة عرض')+'</button><button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
+ document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+(x.offer?' · عرض '+Number(x.offer.discount_percent)+'٪':'')+'</div></div></div><div class="actions">'+(!x.offer?'<button class="btn light" data-offer="'+x.id+'">إضافة عرض</button>':(x.offer.created_by===activeAdminUserId?'<button class="btn light" data-offer="'+x.id+'">'+(x.offer.is_active?'تعديل / إيقاف العرض':'تعديل العرض')+'</button>':'<span class="item-meta">العرض أنشأه مسؤول آخر ولا تملك صلاحية تغييره</span>'))+'<button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
  document.querySelectorAll('[data-offer]').forEach(b=>b.addEventListener('click',()=>manageProductOffer(b.dataset.offer)));
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
@@ -529,6 +529,7 @@ async function editProduct(id){
 async function manageProductOffer(id){
  const product=products.find(x=>x.id===id);if(!product)return;
  const existing=product.offer;
+ if(existing&&existing.created_by!==activeAdminUserId){alert('لا يمكنك تغيير عرض أنشأه مسؤول آخر.');return;}
  if(existing&&existing.is_active&&confirm('يوجد عرض لهذا المنتج. هل تريد إيقاف العرض الحالي؟ اختر «موافق» للإيقاف أو «إلغاء» لتعديله.')){
   const {error}=await activeClient.from('store_product_offers').update({is_active:false,updated_at:new Date().toISOString()}).eq('product_id',id);
   if(error){alert('تعذر إيقاف العرض: '+error.message);return;}
