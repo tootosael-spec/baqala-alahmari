@@ -500,8 +500,8 @@ productImageInput.addEventListener('change',()=>{
 });
 
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
- if(productImageProcessing)await productImageProcessingPromise;
  e.preventDefault();
+ if(productImageProcessing)await productImageProcessingPromise;
  const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=processedProductImageFile||document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
  let units=chosenUnits.slice();
  // Accept the unit currently selected in the dropdown even if the separate
