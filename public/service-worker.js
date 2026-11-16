@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v15-product-card-background-20261117';
+const CACHE_NAME='baqala-pwa-v16-customer-messages-20261117';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
