@@ -99,6 +99,21 @@
     @media(min-width:620px){.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product-card{padding:13px}.product-art{height:145px;font-size:62px}.product-name{font-size:15px}}
     @media(min-width:900px){.products{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.header-inner{padding-bottom:42px}.hero{padding-top:42px}.product-art{height:155px}}
     @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
+  
+  .welcome-popup{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(8,28,18,.62);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+  .welcome-popup.show{display:flex;animation:welcomeFade .28s ease both}
+  .welcome-card{position:relative;width:min(100%,410px);overflow:hidden;border-radius:28px;background:#fff;text-align:center;padding:30px 24px 24px;box-shadow:0 28px 90px #061b1270;animation:welcomePop .35s cubic-bezier(.2,.8,.2,1) both}
+  .welcome-card:before{content:"";position:absolute;inset:0 0 auto;height:120px;background:radial-gradient(circle at 50% 0,#d8f1df,transparent 72%);pointer-events:none}
+  .welcome-close{position:absolute;z-index:1;top:13px;left:13px;width:35px;height:35px;border:0;border-radius:50%;background:#f0f5f0;color:#53645a;font-size:20px}
+  .welcome-mark{position:relative;display:grid;place-items:center;width:78px;height:78px;margin:5px auto 16px;border-radius:25px;background:linear-gradient(145deg,#eaf7ed,#d5efdc);font-size:42px;box-shadow:0 8px 22px #123d2b16}
+  .welcome-card h2{position:relative;margin:0 0 9px;color:#123d2b;font-size:24px;font-weight:700}
+  .welcome-card p{position:relative;margin:0 auto 21px;max-width:310px;color:#68776e;font-size:14px;line-height:1.9}
+  .welcome-cta{position:relative;width:100%;border:0;border-radius:15px;padding:14px 18px;background:linear-gradient(110deg,#123d2b,#238653);color:#fff;font:700 15px inherit;cursor:pointer;box-shadow:0 8px 18px #123d2b25}
+  .welcome-foot{position:relative;display:block;margin-top:13px;color:#9aa49d;font-size:11px}
+  @keyframes welcomeFade{from{opacity:0}to{opacity:1}}
+  @keyframes welcomePop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @media(prefers-reduced-motion:reduce){.welcome-popup.show,.welcome-card{animation:none}}
+
   </style>
 
 <meta name="mobile-web-app-capable" content="yes">
@@ -109,6 +124,18 @@
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 </head>
 <body>
+
+  <div id="welcomePopup" class="welcome-popup" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDescription">
+    <div class="welcome-card">
+      <button class="welcome-close" id="welcomeClose" type="button" aria-label="إغلاق">×</button>
+      <div class="welcome-mark" aria-hidden="true">🛒</div>
+      <h2 id="welcomeTitle">يا هلا ومرحبا بك 🌿</h2>
+      <p id="welcomeDescription">نورت بقالة الأحمري! تسوّق احتياجاتك اليومية بكل سهولة، واختر منتجاتك وسنستقبل طلبك مباشرة عبر واتساب.</p>
+      <button class="welcome-cta" id="welcomeShop" type="button">ابدأ التسوق الآن</button>
+      <small class="welcome-foot">نسعد بخدمتك دائماً 💚</small>
+    </div>
+  </div>
+
   <header class="site-header">
     <div class="header-inner">
       <div class="nav-line">
@@ -260,6 +287,37 @@ await loadStore();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_product_units'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
 <!-- Store asset refresh 2026-11-16 -->
+
+<script>
+(function(){
+ const popup=document.getElementById('welcomePopup');
+ if(!popup)return;
+ const key='baqala_welcome_popup_last_seen';
+ const close=()=>{
+  popup.classList.remove('show');
+  popup.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+ };
+ const last=Number(localStorage.getItem(key)||0);
+ if(Date.now()-last>24*60*60*1000){
+  window.setTimeout(()=>{
+   popup.classList.add('show');
+   popup.setAttribute('aria-hidden','false');
+   document.body.style.overflow='hidden';
+   localStorage.setItem(key,String(Date.now()));
+   document.getElementById('welcomeShop').focus();
+  },650);
+ }
+ document.getElementById('welcomeClose').addEventListener('click',close);
+ document.getElementById('welcomeShop').addEventListener('click',()=>{
+  close();
+  document.getElementById('categories')?.scrollIntoView({behavior:'smooth',block:'start'});
+ });
+ popup.addEventListener('click',event=>{if(event.target===popup)close();});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&popup.classList.contains('show'))close();});
+})();
+</script>
+
 
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(error=>console.warn('PWA service worker registration failed:',error)));}
