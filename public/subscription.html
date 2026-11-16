@@ -35,6 +35,16 @@
 </section></main>
 <script type="module">
 let createClient;
+const loadWithTimeout=(url,ms)=>Promise.race([import(url),new Promise((_,reject)=>setTimeout(()=>reject(new Error('انتهت مهلة تحميل مكتبة الدخول')),ms))]);
+try{({createClient}=await loadWithTimeout('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm',8000));}
+catch(primaryError){
+ try{({createClient}=await loadWithTimeout('https://esm.sh/@supabase/supabase-js@2.57.0',8000));}
+ catch(fallbackError){
+  const e=document.getElementById('loading');
+  e.innerHTML='<b>تعذر الاتصال بخدمة تسجيل الدخول.</b><p class="muted">تأكد من الإنترنت، أو جرّب فتح الصفحة في Chrome. إذا استمرت المشكلة فسيكون الخلل في الوصول إلى خدمة خارجية.</p><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>';
+  throw fallbackError;
+ }
+}
 try{({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm'));}catch(primaryError){try{({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));}catch(fallbackError){const e=document.getElementById('loading');e.innerHTML='<b>تعذر تحميل خدمة تسجيل الدخول.</b><p class="muted">تحقق من اتصال الإنترنت أو افتح الصفحة في Chrome ثم أعد المحاولة.</p><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>';throw fallbackError;}}
 const URL='https://mjykxdxtjntozlnwikim.supabase.co',KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35',OWNER='daad50b9-b0bc-49ca-8ad0-4cfa7570a44b';
 const sb=createClient(URL,KEY,{auth:{storage:localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'},global:{fetch:(input,init={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);return fetch(input,{...init,signal:controller.signal}).finally(()=>clearTimeout(timer));}}});
