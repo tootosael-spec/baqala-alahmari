@@ -167,11 +167,11 @@ input,select,textarea{max-width:100%;min-width:0}
       <div class="nav-line">
         <div class="brand">
           
-          <div><h1 id="storeTitle">بقالة الأحمري</h1><p>كل احتياجات البيت في مكان واحد</p></div>
+          <div><h1 id="storeTitle">بقالة الأحمري</h1></div>
         </div>
       </div>
       <div class="hero">
-        <span class="eyebrow">🌿 تسوّق أسهل، ويوم أريح</span>
+
         
         <div class="search-wrap">
           <span class="search-icon">⌕</span>
@@ -269,7 +269,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function persistCart(){try{localStorage.setItem('baqala_cart',JSON.stringify(cart));}catch(error){console.warn('Could not save cart locally:',error);}}
 function saveStoreCache(){try{localStorage.setItem('baqala_store_catalog_v1',JSON.stringify({version:1,savedAt:Date.now(),categories,products,settings}));}catch(error){console.warn('Could not save local store catalog cache:',error);}}
 async function loadStore(){
- try{const saved=JSON.parse(localStorage.getItem('baqala_store_catalog_v1')||'null');if(saved&&saved.version===1&&Array.isArray(saved.categories)&&Array.isArray(saved.products)){categories=saved.categories;products=saved.products;settings={...settings,...(saved.settings||{})};const headerEl=document.querySelector('.site-header');if(headerEl&&settings.headerImageUrl)headerEl.style.setProperty('--header-image','url('+JSON.stringify(settings.headerImageUrl)+')');document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';document.querySelector('.hero h2 span').textContent=settings.name||'بقالة الأحمري';renderCats();renderProducts();renderCartSummary();window.__BAQALA_STORE_READY__=true;}}catch(error){console.warn('Saved store catalog cache could not be read:',error);}
+ try{const saved=JSON.parse(localStorage.getItem('baqala_store_catalog_v1')||'null');if(saved&&saved.version===1&&Array.isArray(saved.categories)&&Array.isArray(saved.products)){categories=saved.categories;products=saved.products;settings={...settings,...(saved.settings||{})};const headerEl=document.querySelector('.site-header');if(headerEl&&settings.headerImageUrl)headerEl.style.setProperty('--header-image','url('+JSON.stringify(settings.headerImageUrl)+')');document.getElementById('storeTitle').textContent=settings.name||'بقالة الأحمري';renderCats();renderProducts();renderCartSummary();window.__BAQALA_STORE_READY__=true;}}catch(error){console.warn('Saved store catalog cache could not be read:',error);}
  const categoriesRequest=storeApi('store_categories',{select:'id,name,sort_order',is_active:'eq.true',order:'sort_order.asc'});
  const productsRequest=storeApi('store_products',{select:'id,name,category_id,price,unit,emoji,image_url,sort_order',is_active:'eq.true',order:'sort_order.asc,name.asc'});
  const unitsRequest=storeApi('store_product_units',{select:'id,product_id,name,price,is_active,sort_order',is_active:'eq.true',order:'sort_order.asc'});
@@ -327,7 +327,7 @@ async function loadStore(){
   const headerEl=document.querySelector('.site-header');
   headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
   document.getElementById('storeTitle').textContent=settings.name;
-  document.querySelector('.hero h2 span').textContent=settings.name;
+  
   renderCartSummary();
   saveStoreCache();
  }).catch(error=>console.warn('Store settings could not be loaded:',error));
