@@ -235,7 +235,7 @@ async function loadStore(){
    if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);
    unitsByProduct.get(x.product_id).push({...x,price:Number(x.price)});
   });
-  products=(p.data||[]).map(x=>{const category=categoryNames.get(x.category_id)||'أخرى';const units=unitsByProduct.get(x.id)||[];if(/خضار/.test(category)){const rank=name=>{const n=String(name||'').replace(/\s/g,'');return /^(كيلو|الكيلو)$/.test(n)?0:/^(نصكيلو|نصفكيلو)$/.test(n)?1:/^ربعكيلو$/.test(n)?2:10;};units.sort((a,b)=>rank(a.name)-rank(b.name)||Number(a.sort_order||0)-Number(b.sort_order||0));}return {...x,category,imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units};}).filter(x=>x.units.length);
+  products=(p.data||[]).map(x=>{const category=categoryNames.get(x.category_id)||'أخرى';let units=unitsByProduct.get(x.id)||[];if(/خضار/.test(category)){const rank=name=>{const n=String(name||'').replace(/\s/g,'');return /^(كيلو|الكيلو)$/.test(n)?0:/^(نصكيلو|نصفكيلو)$/.test(n)?1:/^ربعكيلو$/.test(n)?2:10;};units.sort((a,b)=>rank(a.name)-rank(b.name)||Number(a.sort_order||0)-Number(b.sort_order||0));}if(!units.length){units=[{id:'legacy-'+x.id,product_id:x.id,name:x.unit||'حبة',price:Number(x.price),is_active:true,sort_order:0}];}return {...x,category,imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units};});
   renderCats();
   const cleanCart={};
   Object.entries(cart).forEach(([key,rawQty])=>{
