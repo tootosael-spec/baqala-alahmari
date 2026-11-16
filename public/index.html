@@ -382,7 +382,7 @@ async function loadStore(){
  }).catch(error=>console.warn('Product units could not be loaded; base product units remain available:',error));
  settingsRequest.then(data=>{
   const row=Array.isArray(data)?data[0]:data;
-  settings={name:row?.store_name||settings.name||'بقالة الأحمري',phone:row?.whatsapp_number??settings.phone??'',deliveryFee:Number(row?.delivery_fee??settings.deliveryFee??0),freeDeliveryThreshold:Number(row?.free_delivery_threshold??settings.freeDeliveryThreshold??30),headerImageUrl:row?.header_image_url??settings.headerImageUrl??'',orderStart:row?.order_acceptance_start||'',orderEnd:row?.order_acceptance_end||''};
+  settings={name:row?.store_name||settings.name||'بقالة الأحمري',phone:row?.whatsapp_number??settings.phone??'',deliveryFee:Number(row?.delivery_fee??settings.deliveryFee??0),freeDeliveryThreshold:Number(row?.free_delivery_threshold??settings.freeDeliveryThreshold??30),headerImageUrl:row?.header_image_url??settings.headerImageUrl??'',orderStart:(row?.order_acceptance_start||'').slice(0,5),orderEnd:(row?.order_acceptance_end||'').slice(0,5)};
   const headerEl=document.querySelector('.site-header');
   headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
   document.getElementById('storeTitle').textContent=settings.name;
