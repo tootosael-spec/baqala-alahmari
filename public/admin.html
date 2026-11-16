@@ -328,8 +328,8 @@ async function loadData(){
   document.getElementById('storePhone').value=settings.whatsapp_number||'';
   document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
   document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
-  document.getElementById('orderAcceptanceStart').value=settings.order_acceptance_start||'';
-  document.getElementById('orderAcceptanceEnd').value=settings.order_acceptance_end||'';
+  document.getElementById('orderAcceptanceStart').value=(settings.order_acceptance_start||'').slice(0,5);
+  document.getElementById('orderAcceptanceEnd').value=(settings.order_acceptance_end||'').slice(0,5);
   await loadManagers();
  }else renderManagerCategoryChecks();
  await loadOrders();
