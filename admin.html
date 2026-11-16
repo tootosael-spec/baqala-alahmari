@@ -10,7 +10,7 @@
 </style></head>
 <body>
 <header class="top"><div><h1>🛒 لوحة إدارة بقالة الأحمري</h1><p>إدارة المنتجات وإعدادات المتجر من مكان واحد</p></div></header>
-<section id="authGate" class="card" style="max-width:430px;margin:50px auto"><h2 style="margin-top:0">تسجيل دخول الإدارة</h2><p style="font-size:13px;color:#758178">أدخل بريد وكلمة مرور حساب صاحب البقالة.</p><form id="loginForm"><label class="field"><span>البريد الإلكتروني</span><input id="loginEmail" type="email" required autocomplete="username"></label><label class="field"><span>كلمة المرور</span><input id="loginPassword" type="password" required autocomplete="current-password"></label><button id="loginButton" class="btn primary full" type="submit">دخول لوحة الإدارة</button></form><p id="authMessage" class="hint" style="display:none"></p><p style="font-size:11px;color:#758178;margin-bottom:0">يجب تفعيل صلاحية صاحب المتجر للحساب قبل الدخول.</p></section><main id="adminApp" class="wrap" style="display:none">
+<section id="authGate" class="card" style="max-width:430px;margin:50px auto"><h2 style="margin-top:0">تسجيل دخول الإدارة</h2><p style="font-size:13px;color:#758178">أدخل بريد وكلمة مرور حساب صاحب البقالة.</p><form id="loginForm"><label class="field"><span>البريد الإلكتروني</span><input id="loginEmail" type="email" required autocomplete="username"></label><label class="field"><span>كلمة المرور</span><input id="loginPassword" type="password" required autocomplete="current-password"></label><button id="loginButton" class="btn primary full" type="submit">دخول لوحة الإدارة</button></form><div style="border-top:1px solid #edf1ed;margin-top:18px;padding-top:14px"><h3 style="margin-bottom:6px">دخول مدير القسم</h3><p style="font-size:12px;color:#758178">أدخل الكود الخاص الذي استلمته من صاحب المتجر.</p><form id="managerCodeForm"><label class="field"><span>كود مدير القسم</span><input id="managerCode" required autocomplete="one-time-code" placeholder="BAQ-XXXXX-XXXXX-XXXXX-XXXXX"></label><button id="managerLoginButton" class="btn light full" type="submit">دخول مدير القسم</button></form><p id="managerAuthMessage" class="hint" style="display:none"></p></div><p id="authMessage" class="hint" style="display:none"></p><p style="font-size:11px;color:#758178;margin-bottom:0">دخول المالك بالبريد وكلمة المرور، ومدير القسم بالكود المخصص له.</p></section><main id="adminApp" class="wrap" style="display:none">
 <section class="welcome" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><h2>مرحباً بك في لوحة التحكم</h2><p>تابع منتجات متجرك وحدّث بياناته بسهولة.</p></div><button id="logoutButton" class="btn light">تسجيل الخروج</button></section>
 <section class="stats"><div class="stat"><span>إجمالي المنتجات</span><strong id="statProducts">0</strong></div><div class="stat"><span>عدد الأقسام</span><strong id="statCats">0</strong></div><div class="stat"><span>طلبات اليوم المحوّلة لواتساب</span><strong id="statOrdersToday">0</strong></div><div class="stat"><span>إجمالي الطلبات المحوّلة</span><strong id="statOrdersTotal">0</strong></div><div class="stat"><span>حالة رقم واتساب</span><strong id="statWhatsapp" style="font-size:17px">غير مضاف</strong></div></section>
 <div class="layout">
@@ -21,7 +21,7 @@
 <div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
 </section>
-<section class="card"><h3>إعدادات المتجر</h3><form id="settingsForm">
+<section id="settingsCard" class="card"><h3>إعدادات المتجر</h3><form id="settingsForm">
 <label class="field"><span>اسم المتجر</span><input id="storeName" placeholder="بقالة الأحمري"></label>
 <label class="field"><span>صورة خلفية الهيدر</span><input id="headerImageFile" type="file" accept="image/*"><!-- Gallery-only image picker --></label>
 <div id="headerImagePreviewWrap" style="display:none;margin:8px 0"><img id="headerImagePreview" alt="معاينة خلفية الهيدر" style="width:100%;max-height:170px;object-fit:cover;border-radius:12px"><p class="item-meta">الصورة الحالية للهيدر</p></div>
@@ -36,7 +36,7 @@
 <div class="hint">المنتجات والإعدادات محفوظة الآن في قاعدة بيانات Supabase المشتركة. الدخول محمي بحساب صاحب المتجر وسياسات RLS. رفع الصور متاح عبر رابط مباشر حالياً، وتوليد الصور بالذكاء الاصطناعي يحتاج ربط خدمة مستقلة.</div>
 </section>
 </div>
-<section class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">أضف الأقسام أو عدّل أسماءها أو احذفها من هنا. حذف القسم لا يحذف المنتجات المرتبطة به.</p><form id="addCategoryForm" class="row" style="align-items:end"><label class="field"><span>اسم القسم الجديد</span><input id="newCategoryName" maxlength="60" placeholder="مثال: التموينات" required></label><button class="btn primary" type="submit" style="margin-bottom:11px">＋ إضافة قسم</button></form><div id="categoryList"></div></section>
+<section id="managerManagement" class="card products" style="display:none"><h3>إدارة مديري الأقسام</h3><p class="item-meta">أضف مديراً وحدد له قسماً أو أكثر. سيحصل على كود دخول خاص، ويمكنك تعديل أقسامه أو إيقافه أو إصدار كود جديد.</p><form id="managerForm"><label class="field"><span>اسم مدير القسم</span><input id="managerName" maxlength="80" required placeholder="اسم المدير"></label><div class="field"><span>الأقسام المسندة إليه</span><div id="managerCategoryChecks" class="item-meta">حمّل الأقسام أولاً.</div></div><div class="row"><button id="saveManagerButton" class="btn primary" type="submit">＋ إضافة مدير</button><button id="cancelManagerEdit" class="btn light" type="button" style="display:none">إلغاء التعديل</button></div></form><div id="managerList" style="margin-top:14px"></div></section><section id="categoryManagement" class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">أضف الأقسام أو عدّل أسماءها أو احذفها من هنا. حذف القسم لا يحذف المنتجات المرتبطة به.</p><form id="addCategoryForm" class="row" style="align-items:end"><label class="field"><span>اسم القسم الجديد</span><input id="newCategoryName" maxlength="60" placeholder="مثال: التموينات" required></label><button class="btn primary" type="submit" style="margin-bottom:11px">＋ إضافة قسم</button></form><div id="categoryList"></div></section>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
 
@@ -54,7 +54,10 @@ try {
     throw fallbackError;
   }
 }
-const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35',{
+const SUPABASE_URL='https://mjykxdxtjntozlnwikim.supabase.co';
+const SUPABASE_PUBLIC_KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35';
+const MANAGER_FUNCTION_URL=SUPABASE_URL+'/functions/v1/department-manager-access';
+const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
  auth:{
   storage:window.localStorage,
   persistSession:true,
@@ -64,7 +67,8 @@ const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publi
  }
 });
 
-let products=[],categories=[],settings={};
+let products=[],categories=[],settings={},managers=[];
+let currentRole='',editingManagerId=null;
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function parseUnits(raw){return raw.split(/\r?\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
@@ -79,68 +83,125 @@ document.getElementById('pCategory').addEventListener('change',syncUnitCategory)
 document.getElementById('addUnitBtn').addEventListener('click',()=>{const price=Number(document.getElementById('pUnitPrice').value);if(document.getElementById('pUnitPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل سعر الوحدة');return;}if(isVegetableCategory(document.getElementById('pCategory').value)){chosenUnits=makeVegUnits(price);}else{const name=document.getElementById('pUnitChoice').value;if(chosenUnits.some(u=>u.name===name)){alert('هذه الوحدة مضافة بالفعل');return;}chosenUnits.push({name,price});}renderChosenUnits();});
 document.getElementById('unitChoicesList').addEventListener('click',e=>{const b=e.target.closest('[data-remove-unit]');if(!b)return;chosenUnits.splice(Number(b.dataset.removeUnit),1);renderChosenUnits();});
 
+async function managerApi(action,payload={}){
+ const {data:{session}}=await supabase.auth.getSession();
+ const response=await fetch(MANAGER_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLIC_KEY,'Authorization':'Bearer '+(session?.access_token||SUPABASE_PUBLIC_KEY)},body:JSON.stringify({action,...payload})});
+ const result=await response.json().catch(()=>({error:'تعذر قراءة استجابة الخادم'}));
+ if(!response.ok)throw new Error(result.error||'تعذر تنفيذ العملية');return result;
+}
+function renderManagerCategoryChecks(selected=[]){
+ const el=document.getElementById('managerCategoryChecks');if(!el)return;
+ el.innerHTML=categories.length?categories.map(x=>'<label style="display:inline-flex;align-items:center;gap:6px;margin:6px 12px 6px 0"><input type="checkbox" value="'+x.id+'" '+(selected.includes(x.id)?'checked':'')+' style="width:auto"> '+esc(x.name)+'</label>').join(''):'لا توجد أقسام لإسنادها.';
+}
+function selectedManagerCategories(){return [...document.querySelectorAll('#managerCategoryChecks input:checked')].map(x=>x.value);}
+async function loadManagers(){
+ try{
+  const result=await managerApi('list');managers=result.managers||[];const names=new Map(categories.map(x=>[x.id,x.name]));
+  document.getElementById('managerList').innerHTML=managers.length?managers.map(m=>'<div class="item"><div><div class="item-name">'+esc(m.name)+' · '+(m.is_active?'نشط':'موقوف')+'</div><div class="item-meta">'+m.category_ids.map(id=>esc(names.get(id)||'قسم محذوف')).join('، ')+'</div></div><div class="actions"><button class="btn light" data-manager-edit="'+m.id+'">تعديل</button><button class="btn light" data-manager-toggle="'+m.id+'">'+(m.is_active?'إيقاف':'تفعيل')+'</button><button class="btn light" data-manager-rotate="'+m.id+'">كود جديد</button><button class="btn danger" data-manager-delete="'+m.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لم تتم إضافة مديري أقسام بعد.</p>';
+  document.querySelectorAll('[data-manager-edit]').forEach(b=>b.onclick=()=>editManager(b.dataset.managerEdit));
+  document.querySelectorAll('[data-manager-toggle]').forEach(b=>b.onclick=()=>toggleManager(b.dataset.managerToggle));
+  document.querySelectorAll('[data-manager-rotate]').forEach(b=>b.onclick=()=>rotateManagerCode(b.dataset.managerRotate));
+  document.querySelectorAll('[data-manager-delete]').forEach(b=>b.onclick=()=>deleteManager(b.dataset.managerDelete));
+ }catch(e){document.getElementById('managerList').innerHTML='<p class="item-meta">تعذر تحميل المديرين: '+esc(e.message)+'</p>';}
+}
+function editManager(id){
+ const m=managers.find(x=>x.id===id);if(!m)return;editingManagerId=id;document.getElementById('managerName').value=m.name;renderManagerCategoryChecks(m.category_ids);
+ document.getElementById('saveManagerButton').textContent='حفظ التعديلات';document.getElementById('cancelManagerEdit').style.display='inline-block';
+ document.getElementById('managerForm').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetManagerForm(){
+ editingManagerId=null;document.getElementById('managerForm').reset();renderManagerCategoryChecks();
+ document.getElementById('saveManagerButton').textContent='＋ إضافة مدير';document.getElementById('cancelManagerEdit').style.display='none';
+}
+document.getElementById('managerForm').addEventListener('submit',async e=>{
+ e.preventDefault();const name=document.getElementById('managerName').value.trim(),categoryIds=selectedManagerCategories();
+ if(!categoryIds.length){alert('اختر قسماً واحداً على الأقل');return;}
+ const btn=document.getElementById('saveManagerButton');btn.disabled=true;
+ try{
+  if(editingManagerId){await managerApi('update',{id:editingManagerId,name,categoryIds});alert('تم تحديث بيانات المدير وأقسامه.');}
+  else{const result=await managerApi('create',{name,categoryIds});alert('تم إنشاء مدير القسم. احفظ الكود التالي وسلّمه للمدير؛ لن يظهر مرة أخرى:\n\n'+result.code);}
+  resetManagerForm();await loadManagers();
+ }catch(err){alert('تعذر حفظ المدير: '+err.message);}finally{btn.disabled=false;}
+});
+document.getElementById('cancelManagerEdit').addEventListener('click',resetManagerForm);
+async function toggleManager(id){const m=managers.find(x=>x.id===id);if(!m)return;try{await managerApi('set-active',{id,is_active:!m.is_active});await loadManagers();}catch(e){alert('تعذر تغيير حالة المدير: '+e.message);}}
+async function rotateManagerCode(id){
+ if(!confirm('سيتم إلغاء الكود السابق وإصدار كود جديد. هل تريد المتابعة؟'))return;
+ try{const result=await managerApi('rotate-code',{id});alert('الكود الجديد للمدير، احفظه وسلّمه له:\n\n'+result.code);await loadManagers();}catch(e){alert('تعذر إصدار الكود: '+e.message);}
+}
+async function deleteManager(id){
+ const m=managers.find(x=>x.id===id);if(!m||!confirm('حذف مدير القسم "'+m.name+'" وإلغاء صلاحياته نهائياً؟'))return;
+ try{await managerApi('delete',{id});if(editingManagerId===id)resetManagerForm();await loadManagers();}catch(e){alert('تعذر حذف المدير: '+e.message);}
+}
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
- const [c,p,u,s,ordersTotal,ordersToday]=await Promise.all([
+ const managerMode=currentRole==='department_manager';
+ const [c,p,u]=await Promise.all([
   supabase.from('store_categories').select('id,name,sort_order').order('sort_order'),
   supabase.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
-  supabase.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order'),
-  supabase.from('store_settings').select('*').eq('id',1).single(),
-  supabase.from('store_order_events').select('id',{count:'exact',head:true}),
-  supabase.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
+  supabase.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order')
  ]);
- if(c.error||p.error||u.error||s.error||ordersTotal.error||ordersToday.error) {
-  const failed=[c.error,p.error,u.error,s.error,ordersTotal.error,ordersToday.error].find(Boolean);
-  throw failed;
- }
+ if(c.error||p.error||u.error)throw [c.error,p.error,u.error].find(Boolean);
  categories=c.data||[];
+ document.getElementById('pCategory').innerHTML=categories.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');
  document.getElementById('statCats').textContent=categories.length;
- document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
- document.getElementById('categoryList').innerHTML=categories.length?categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><div class="actions"><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button><button class="btn danger" data-delete-category="'+c.id+'">حذف القسم</button></div></div>').join(''):'<p class="item-meta">لا توجد أقسام. أضف قسماً جديداً من الأعلى.</p>';
- document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
- document.querySelectorAll('[data-delete-category]').forEach(b=>b.addEventListener('click',()=>removeCategory(b.dataset.deleteCategory)));
+ if(!managerMode){
+  document.getElementById('categoryList').innerHTML=categories.length?categories.map(x=>'<div class="item"><div class="item-name">'+esc(x.name)+'</div><div class="actions"><button class="btn light" data-rename-category="'+x.id+'">تعديل الاسم</button><button class="btn danger" data-delete-category="'+x.id+'">حذف القسم</button></div></div>').join(''):'<p class="item-meta">لا توجد أقسام. أضف قسماً جديداً من الأعلى.</p>';
+  document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
+  document.querySelectorAll('[data-delete-category]').forEach(b=>b.addEventListener('click',()=>removeCategory(b.dataset.deleteCategory)));
+ }
  const unitsByProduct=new Map();
  (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
  const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
  products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[]}));
- settings=s.data||{};
- document.getElementById('statOrdersTotal').textContent=ordersTotal.count??0;
- document.getElementById('statOrdersToday').textContent=ordersToday.count??0;
  document.getElementById('statProducts').textContent=products.length;
- document.getElementById('statWhatsapp').textContent=settings.whatsapp_number?'مضاف ✓':'غير مضاف';
- document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
- const headerPreview=document.getElementById('headerImagePreview'),headerWrap=document.getElementById('headerImagePreviewWrap');
- if(settings.header_image_url){headerPreview.src=settings.header_image_url;headerWrap.style.display='block';}else{headerPreview.removeAttribute('src');headerWrap.style.display='none';}
- document.getElementById('storePhone').value=settings.whatsapp_number||'';
- document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
- document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
- syncUnitCategory();
- document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category.name)+' · '+(p.units||[]).map(u=>esc(u.name)+' '+money(u.price)).join('، ')+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+ document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
+ if(!managerMode){
+  const [s,ordersTotal,ordersToday]=await Promise.all([
+   supabase.from('store_settings').select('*').eq('id',1).single(),
+   supabase.from('store_order_events').select('id',{count:'exact',head:true}),
+   supabase.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
+  ]);
+  if(s.error||ordersTotal.error||ordersToday.error)throw [s.error,ordersTotal.error,ordersToday.error].find(Boolean);
+  settings=s.data||{};
+  document.getElementById('statOrdersTotal').textContent=ordersTotal.count??0;
+  document.getElementById('statOrdersToday').textContent=ordersToday.count??0;
+  document.getElementById('statWhatsapp').textContent=settings.whatsapp_number?'مضاف ✓':'غير مضاف';
+  document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
+  const preview=document.getElementById('headerImagePreview'),wrap=document.getElementById('headerImagePreviewWrap');
+  if(settings.header_image_url){preview.src=settings.header_image_url;wrap.style.display='block';}else{preview.removeAttribute('src');wrap.style.display='none';}
+  document.getElementById('storePhone').value=settings.whatsapp_number||'';
+  document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
+  document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
+  await loadManagers();
+ }else renderManagerCategoryChecks();
+ syncUnitCategory();
 }
 let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null;
 async function enterAdmin(session){
- const user=session?.user;
- if(!user)return;
+ const user=session?.user;if(!user)return;
  if(enteringAdmin||activeAdminUserId===user.id)return;
  enteringAdmin=true;
  try{
   const role=user.app_metadata?.role;
-  if(role!=='store_admin'){
-   activeAdminUserId=null;
-   await supabase.auth.signOut();
-   showMessage('هذا الحساب غير مخوّل لإدارة المتجر. أرسل بريد الحساب للمسؤول لتفعيله.');
-   return;
+  if(!['store_admin','department_manager'].includes(role)){
+   activeAdminUserId=null;await supabase.auth.signOut();showMessage('هذا الحساب غير مخوّل لإدارة المتجر.');return;
   }
-  activeAdminUserId=user.id;
+  currentRole=role;activeAdminUserId=user.id;const owner=role==='store_admin';
   document.getElementById('authGate').style.display='none';
   document.getElementById('adminApp').style.display='block';
+  document.getElementById('settingsCard').style.display=owner?'block':'none';
+  document.getElementById('categoryManagement').style.display=owner?'block':'none';
+  document.getElementById('managerManagement').style.display=owner?'block':'none';
+  document.querySelector('.stats').style.display=owner?'grid':'none';
+  document.querySelector('.welcome h2').textContent=owner?'مرحباً بك في لوحة تحكم المالك':'لوحة مدير القسم';
+  document.querySelector('.welcome p').textContent=owner?'تابع منتجات متجرك وحدّث بياناته بسهولة.':'يمكنك إدارة المنتجات التابعة للأقسام المسندة إليك فقط.';
   try{await loadData();}catch(e){
    console.error('Admin data loading failed:',e);
-   const list=document.getElementById('productList');
-   list.innerHTML='<p class="item-meta" role="alert">تعذر تحميل بيانات الإدارة: '+esc(e.message||'خطأ غير معروف')+'. حدّث الصفحة أو حاول مرة أخرى.</p>';
+   document.getElementById('productList').innerHTML='<p class="item-meta" role="alert">تعذر تحميل بيانات الإدارة: '+esc(e.message||'خطأ غير معروف')+'. حدّث الصفحة أو حاول مرة أخرى.</p>';
   }
  }finally{enteringAdmin=false;}
 }
@@ -155,6 +216,18 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
   if(data.session)await enterAdmin(data.session);
  }catch(error){showMessage('تعذر إكمال تسجيل الدخول. تحقق من الاتصال ثم حاول مجدداً.');console.error(error);}
  finally{btn.disabled=false;btn.textContent='دخول لوحة الإدارة';}
+});
+document.getElementById('managerCodeForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=document.getElementById('managerLoginButton'),message=document.getElementById('managerAuthMessage');
+ btn.disabled=true;btn.textContent='جارٍ التحقق...';message.style.display='none';
+ try{
+  const response=await fetch(MANAGER_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLIC_KEY,'Authorization':'Bearer '+SUPABASE_PUBLIC_KEY},body:JSON.stringify({action:'login',code:document.getElementById('managerCode').value.trim()})});
+  const result=await response.json().catch(()=>({error:'تعذر قراءة الاستجابة'}));
+  if(!response.ok||!result.session)throw new Error(result.error||'الكود غير صحيح');
+  const {error}=await supabase.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+  if(error)throw error;await enterAdmin({user:result.user,access_token:result.session.access_token});
+ }catch(err){message.textContent=err.message||'تعذر تسجيل الدخول';message.style.display='block';}
+ finally{btn.disabled=false;btn.textContent='دخول مدير القسم';}
 });
 async function restoreAdminSession(){
  try{
