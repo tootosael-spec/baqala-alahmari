@@ -203,7 +203,7 @@ input,select,textarea{max-width:100%;min-width:0}
     <div class="cart-dock-inner">
       <div class="cart-info"><small id="cartCount">0 منتجات في السلة</small><strong id="cartTotal">0.00 ر.س</strong></div>
       <div class="dock-actions">
-        <button id="reorderButton" class="reorder-btn" type="button" hidden onclick="reorderLastOrder()">↻ آخر طلب</button>
+        <button id="reorderButton" class="reorder-btn" type="button" aria-label="استعادة آخر طلب محفوظ" onclick="reorderLastOrder()">↻ آخر طلب</button>
         <button class="cart-open" onclick="openCart()">عرض السلة <span class="cart-count" id="cartBadge">0</span> <span>←</span></button>
       </div>
     </div>
@@ -238,7 +238,7 @@ try {
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
 let products=[],categories=[],settings={},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
 function readLastOrder(){try{const saved=JSON.parse(localStorage.getItem('baqala_last_order')||'null');return saved&&Array.isArray(saved.items)?saved:null;}catch(error){console.warn('Saved previous order was unreadable:',error);return null;}}
-function updateReorderButton(){const button=document.getElementById('reorderButton');if(button)button.hidden=!readLastOrder()?.items?.length;}
+function updateReorderButton(){const button=document.getElementById('reorderButton');if(button)button.hidden=false;}
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function persistCart(){try{localStorage.setItem('baqala_cart',JSON.stringify(cart));}catch(error){console.warn('Could not save cart locally:',error);}}
