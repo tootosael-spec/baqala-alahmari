@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v17-order-hours-20261117';
+const CACHE_NAME='baqala-pwa-v18-delivery-hours-message-20261117';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
