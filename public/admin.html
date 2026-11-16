@@ -54,7 +54,15 @@ try {
     throw fallbackError;
   }
 }
-const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
+const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35',{
+ auth:{
+  storage:window.localStorage,
+  persistSession:true,
+  autoRefreshToken:true,
+  detectSessionInUrl:true,
+  flowType:'pkce'
+ }
+});
 
 let products=[],categories=[],settings={};
 const money=n=>Number(n).toFixed(2)+' ر.س';
@@ -124,8 +132,26 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  if(error){showMessage('تعذر تسجيل الدخول: '+error.message);return;}
  await enterAdmin(data.session);
 });
-const {data:{session}}=await supabase.auth.getSession();if(session)await enterAdmin(session);
-supabase.auth.onAuthStateChange((_event,session)=>{if(!session){document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}});
+let adminSessionReady=false;
+async function restoreAdminSession(){
+ const {data:{session},error}=await supabase.auth.getSession();
+ if(error){showMessage('تعذر استعادة جلسة الدخول: '+error.message);return;}
+ if(session){await enterAdmin(session);}
+ else{document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}
+ adminSessionReady=true;
+}
+supabase.auth.onAuthStateChange((event,session)=>{
+ if(event==='SIGNED_OUT'||!session){
+  document.getElementById('adminApp').style.display='none';
+  document.getElementById('authGate').style.display='block';
+  return;
+ }
+ if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
+  if(!adminSessionReady) return;
+  queueMicrotask(()=>enterAdmin(session));
+ }
+});
+await restoreAdminSession();
 document.getElementById('logoutButton').addEventListener('click',()=>supabase.auth.signOut());
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
