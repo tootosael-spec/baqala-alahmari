@@ -316,6 +316,7 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
  const installHint=document.getElementById('welcomeInstallHint');
  let deferredInstallPrompt=null;
  const isInstalled=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ installButton.hidden=true;
  const close=()=>{
   popup.classList.remove('show');
   popup.setAttribute('aria-hidden','true');
@@ -325,6 +326,7 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
   installButton.hidden=true;
   installHint.textContent='التطبيق مثبت عندك بالفعل، نسعد بخدمتك دائماً 💚';
  }else{
+  installButton.hidden=false;
   window.addEventListener('beforeinstallprompt',event=>{
    event.preventDefault();
    deferredInstallPrompt=event;
