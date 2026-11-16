@@ -41,7 +41,7 @@ const categoriesFallback=['الألبان والأجبان','المشروبات 
 let products=[],categories=[],settings={};
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function parseUnits(raw){return raw.split(/\\r?\\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
+function parseUnits(raw){return raw.split(/\r?\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
  const [p,c,s,ordersTotal,ordersToday]=await Promise.all([
