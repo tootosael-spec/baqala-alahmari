@@ -37,6 +37,10 @@
     .page-wrap{max-width:1180px;margin:auto;padding:0 20px}
     .section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:28px 0 13px}
     .section-head h2{font-size:19px;font-weight:700;margin:0;letter-spacing:-.3px}
+    .reorder-btn{border:1px solid #cfe5d4;background:#eaf5ed;color:#176b40;border-radius:12px;padding:11px 12px;font-size:12px;font-weight:700;white-space:nowrap;min-height:46px}
+    .reorder-btn[hidden]{display:none}
+    .dock-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+    @media(max-width:420px){.dock-actions{gap:6px}.dock-actions .reorder-btn{padding:10px 8px;font-size:11px}.dock-actions .cart-open{padding:12px 10px;font-size:11px}}
     .section-head p{font-size:12px;color:var(--muted);margin:3px 0 0}
     .categories{position:sticky;top:0;z-index:6;display:flex;gap:9px;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;background:rgba(245,247,244,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 1px 12px;margin:0;scrollbar-width:none;scroll-snap-type:x proximity;border-bottom:1px solid #e4eae4}
     .categories::-webkit-scrollbar{display:none}
@@ -186,7 +190,7 @@ input,select,textarea{max-width:100%;min-width:0}
       <div id="categories" class="categories" aria-label="التنقل بين أقسام المنتجات" style="position:sticky;top:0;z-index:2"></div>
     <div class="section-head">
         <div><h2>منتجاتنا</h2><p id="productCount">منتجات مختارة لك</p></div>
-        <span class="badge badge-outline badge-success">طازج يومياً</span>
+        
       </div>
       <div id="products" class="products"></div>
     </section>
@@ -198,7 +202,10 @@ input,select,textarea{max-width:100%;min-width:0}
   <div class="cart-dock">
     <div class="cart-dock-inner">
       <div class="cart-info"><small id="cartCount">0 منتجات في السلة</small><strong id="cartTotal">0.00 ر.س</strong></div>
-      <button class="cart-open" onclick="openCart()">عرض السلة <span class="cart-count" id="cartBadge">0</span> <span>←</span></button>
+      <div class="dock-actions">
+        <button id="reorderButton" class="reorder-btn" type="button" aria-label="استعادة آخر طلب محفوظ" onclick="reorderLastOrder()">↻ آخر طلب</button>
+        <button class="cart-open" onclick="openCart()">عرض السلة <span class="cart-count" id="cartBadge">0</span> <span>←</span></button>
+      </div>
     </div>
   </div>
 
@@ -230,6 +237,8 @@ try {
 }
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
 let products=[],categories=[],settings={},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
+function readLastOrder(){try{const saved=JSON.parse(localStorage.getItem('baqala_last_order')||'null');return saved&&Array.isArray(saved.items)?saved:null;}catch(error){console.warn('Saved previous order was unreadable:',error);return null;}}
+function updateReorderButton(){const button=document.getElementById('reorderButton');if(button)button.hidden=false;}
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function persistCart(){try{localStorage.setItem('baqala_cart',JSON.stringify(cart));}catch(error){console.warn('Could not save cart locally:',error);}}
@@ -301,9 +310,11 @@ window.openCart=function(){renderCart();document.getElementById('cartModal').sty
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
 function renderCart(){const list=cartEntries();document.getElementById('cartItems').innerHTML=list.length?list.map(x=>'<div class="line-item"><div><b>'+esc(x.p.name)+' — '+esc(x.u.name)+'</b><div class="line-sub">'+money(x.u.price)+' لكل '+esc(x.u.name)+'</div></div><div class="qty-control"><button data-dec="'+esc(x.key)+'">−</button><b>'+x.qty+'</b><button data-inc="'+esc(x.key)+'">+</button></div><strong>'+money(x.u.price*x.qty)+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong></div>';document.getElementById('deliveryFeeRow').textContent=actualDeliveryFee()===0?'مجاني':money(actualDeliveryFee());document.getElementById('modalTotal').textContent=money(total());document.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.dec,-1)));document.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.inc,1)));}
 function changeQty(key,d){cart[key]=(cart[key]||0)+d;if(cart[key]<=0)delete cart[key];persistCart();renderCart();renderCartSummary();}
-window.sendOrder=function(){const list=cartEntries();if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const orderNo='BAQ-'+Date.now().toString().slice(-8);const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);const lines=list.map(x=>x.p.name+'\nالكمية: '+arabicNum(x.qty)+' '+x.u.name+'\nالسعر: '+arabicNum(x.u.price*x.qty)+' ريال');let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\n\nرقم الطلب: '+orderNo+'\n\n'+lines.join('\n\n')+'\n-----\nرسوم التوصيل: '+(actualDeliveryFee()===0?'مجاني':arabicNum(actualDeliveryFee())+' ريال')+'\n-----\nالإجمالي: '+arabicNum(total())+' ر.س';const note=document.getElementById('orderNote').value.trim();if(note)msg+='\n\nملاحظات: '+note;msg='*'+msg+'*';const webUrl='https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg);const androidIntent='intent://send?phone='+settings.phone+'&text='+encodeURIComponent(msg)+'#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url='+encodeURIComponent(webUrl)+';end';const target=/Android/i.test(navigator.userAgent)?androidIntent:webUrl;const wa=window.open(target,'_blank');if(!wa){alert('تعذر فتح واتساب. اسمح بفتح النوافذ المنبثقة ثم أعد المحاولة.');return;}supabase.from('store_order_events').insert({}).then(({error})=>{if(error)console.error('تعذر تسجيل إحصائية الطلب:',error);});cart={};persistCart();document.getElementById('orderNote').value='';renderCart();renderCartSummary();closeModal('cartModal');};
+window.reorderLastOrder=function(){const previous=readLastOrder();if(!previous?.items?.length){alert('لا يوجد طلب سابق محفوظ على هذا الجهاز حتى الآن.');return;}if(cartEntries().length&&!confirm('سيتم استبدال محتويات سلتك الحالية بآخر طلب محفوظ. هل تريد المتابعة؟'))return;const restored={};let skipped=0;previous.items.forEach(item=>{const product=products.find(p=>p.id===item.productId);const unit=product?.units.find(u=>u.id===item.unitId);const qty=Math.floor(Number(item.qty));if(product&&unit&&Number.isFinite(qty)&&qty>0)restored[product.id+'__'+unit.id]=(restored[product.id+'__'+unit.id]||0)+qty;else skipped++;});if(!Object.keys(restored).length){alert('منتجات طلبك السابق لم تعد متاحة حالياً.');return;}cart=restored;persistCart();renderCartSummary();renderCart();openCart();if(skipped)alert('تمت استعادة المنتجات المتاحة، وتجاوزنا '+skipped+' من المنتجات التي لم تعد متوفرة.');};
+window.sendOrder=function(){const list=cartEntries();if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const orderNo='BAQ-'+Date.now().toString().slice(-8);const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);const lines=list.map(x=>x.p.name+'\nالكمية: '+arabicNum(x.qty)+' '+x.u.name+'\nالسعر: '+arabicNum(x.u.price*x.qty)+' ريال');let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\n\nرقم الطلب: '+orderNo+'\n\n'+lines.join('\n\n')+'\n-----\nرسوم التوصيل: '+(actualDeliveryFee()===0?'مجاني':arabicNum(actualDeliveryFee())+' ريال')+'\n-----\nالإجمالي: '+arabicNum(total())+' ر.س';const note=document.getElementById('orderNote').value.trim();if(note)msg+='\n\nملاحظات: '+note;msg='*'+msg+'*';const webUrl='https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg);const androidIntent='intent://send?phone='+settings.phone+'&text='+encodeURIComponent(msg)+'#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url='+encodeURIComponent(webUrl)+';end';const target=/Android/i.test(navigator.userAgent)?androidIntent:webUrl;try{localStorage.setItem('baqala_last_order',JSON.stringify({savedAt:new Date().toISOString(),items:list.map(x=>({productId:x.p.id,unitId:x.u.id,qty:x.qty}))}));updateReorderButton();}catch(error){console.error('Could not save previous order:',error);alert('تعذر حفظ الطلب السابق على هذا الجهاز. تحقق من مساحة التخزين ثم أعد المحاولة.');return;}const wa=window.open(target,'_blank');if(!wa){window.location.href=webUrl;}supabase.from('store_order_events').insert({}).then(({error})=>{if(error)console.error('تعذر تسجيل إحصائية الطلب:',error);});cart={};persistCart();document.getElementById('orderNote').value='';renderCart();renderCartSummary();closeModal('cartModal');};
 document.getElementById('search').addEventListener('input',renderProducts);
 await loadStore();
+updateReorderButton();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_product_units'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
 </script>
 <!-- Store asset refresh 2026-11-16 -->
@@ -316,6 +327,7 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
  const installHint=document.getElementById('welcomeInstallHint');
  let deferredInstallPrompt=null;
  const isInstalled=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ installButton.hidden=true;
  const close=()=>{
   popup.classList.remove('show');
   popup.setAttribute('aria-hidden','true');
@@ -325,6 +337,7 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
   installButton.hidden=true;
   installHint.textContent='التطبيق مثبت عندك بالفعل، نسعد بخدمتك دائماً 💚';
  }else{
+  installButton.hidden=false;
   window.addEventListener('beforeinstallprompt',event=>{
    event.preventDefault();
    deferredInstallPrompt=event;
@@ -369,21 +382,7 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
 
 
 <script>
-if('serviceWorker' in navigator){
- navigator.serviceWorker.addEventListener('controllerchange',()=>{
-  try{
-   if(sessionStorage.getItem('baqala-sw-refresh-v2')==='1')return;
-   sessionStorage.setItem('baqala-sw-refresh-v2','1');
-  }catch(error){}
-  window.location.reload();
- },{once:true});
- window.addEventListener('load',async()=>{
-  try{
-   const registration=await navigator.serviceWorker.register('/service-worker.js?v=20261116-2',{scope:'/',updateViaCache:'none'});
-   registration.update().catch(error=>console.warn('PWA update check failed:',error));
-  }catch(error){console.warn('PWA service worker registration failed:',error);}
- });
-}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(error=>console.warn('PWA service worker registration failed:',error)));}
 </script>
 </body>
 </html>
