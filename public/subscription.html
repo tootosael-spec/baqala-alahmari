@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#174b36">
+<title>اشتراك البقالة</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7f4;color:#203027;font-family:Tahoma,Arial,sans-serif}header{background:#174b36;color:#fff;padding:22px 16px}header h1{margin:0 0 5px;font-size:22px}header p{margin:0;color:#dcebe1;font-size:13px}main{max-width:800px;margin:auto;padding:16px 13px 45px}.card{background:#fff;border:1px solid #e1e9e2;border-radius:15px;padding:16px;margin-bottom:13px}.hidden{display:none!important}h2{font-size:17px;margin:0 0 10px}label{display:block;font-size:13px;margin:10px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:12px;border:1px solid #d5ded6;border-radius:9px;background:#fff}button{border:0;border-radius:9px;padding:12px 15px;background:#17613f;color:#fff;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}.muted{font-size:13px;color:#6c786f;line-height:1.7}.msg{padding:10px;border-radius:9px;background:#fff5dd;color:#76531b;font-size:13px;margin-top:10px}.ok{background:#e9f7ed;color:#1b6337}.bad{background:#fff0ef;color:#8b2e29}.store{border:1px solid #e2eae3;border-radius:12px;padding:14px;margin-top:10px}.tag{display:inline-block;background:#eef5ef;color:#20543a;border-radius:20px;padding:5px 10px;font-size:12px}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.receipt{padding:10px 0;border-top:1px solid #edf1ed;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>اشتراك البقالة</h1><p>متابعة الاشتراك ورفع إيصال التحويل البنكي</p></header>
+<main>
+<section id="auth" class="card">
+<h2>دخول صاحب البقالة</h2><p class="muted">أنشئ حساباً بالبريد الإلكتروني أو سجّل الدخول لمتابعة اشتراك متجرك.</p>
+<form id="authForm">
+<label>البريد الإلكتروني</label><input id="email" type="email" required autocomplete="username">
+<label>كلمة المرور</label><input id="password" type="password" required minlength="8" autocomplete="current-password">
+<div class="row" style="margin-top:13px"><button type="submit" id="loginBtn">دخول</button><button type="button" id="signupBtn" style="background:#eaf2ec;color:#174b36">إنشاء حساب</button></div>
+</form><div id="authMsg" class="msg hidden"></div>
+</section>
+<section id="portal" class="hidden">
+<div class="card row"><div><b>حساب صاحب البقالة</b><div class="muted" id="userEmail"></div></div><button id="logoutBtn" style="background:#eaf2ec;color:#174b36">تسجيل الخروج</button></div>
+<div class="card"><h2>متاجري واشتراكاتي</h2><div id="stores" class="muted">جارٍ التحميل...</div></div>
+</section>
+</main>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+const sb=createClient('https://szntskhngiyxhhddcesx.supabase.co','sb_publishable_63rH2_Eun3uaibutZEMw1g_GP6K1kIc');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function msg(el,text,kind=''){el.textContent=text;el.className='msg '+kind}
+async function show(){
+ const {data:{session}}=await sb.auth.getSession();
+ $('auth').classList.toggle('hidden',!!session);$('portal').classList.toggle('hidden',!session);
+ if(session){$('userEmail').textContent=session.user.email||'';await loadStores(session.user)}
+}
+async function loadStores(user){
+ const {data:members,error}=await sb.from('store_members').select('store_id,member_role,stores(name,slug,website_url)').eq('user_id',user.id);
+ if(error){$('stores').textContent=error.message;return}
+ if(!members?.length){$('stores').innerHTML='لم يتم ربط هذا الحساب ببقالة حتى الآن. اطلب من مدير المنصة ربط بريدك الإلكتروني بالبقالة.';return}
+ $('stores').innerHTML='';
+ for(const m of members){
+  const {data:sub}=await sb.from('subscriptions').select('*').eq('store_id',m.store_id).maybeSingle();
+  const {data:receipts}=await sb.from('payment_receipts').select('id,amount,currency,requested_months,status,created_at').eq('store_id',m.store_id).order('created_at',{ascending:false});
+  const el=document.createElement('div');el.className='store';
+  el.innerHTML='<h3 style="margin:0 0 6px">'+esc(m.stores?.name||'البقالة')+'</h3><div class="muted">حالة الاشتراك: <span class="tag">'+esc(sub?.status||'غير محدد')+'</span></div><p class="muted">قيمة الاشتراك: '+esc(sub?.amount??50)+' ريال شهرياً<br>تاريخ الانتهاء: '+(sub?.ends_at?new Date(sub.ends_at).toLocaleDateString('ar-SA'):'لم يتم التفعيل بعد')+'</p><h2 style="margin-top:15px">رفع إيصال التحويل</h2><form class="receiptForm" data-store="'+m.store_id+'"><label>عدد الأشهر</label><select name="months"><option value="1">شهر واحد — 50 ريال</option><option value="2">شهران — 100 ريال</option><option value="3">3 أشهر — 150 ريال</option><option value="6">6 أشهر — 300 ريال</option><option value="12">12 شهراً — 600 ريال</option></select><label>صورة الإيصال أو ملف PDF (حد أقصى 5 ميجابايت)</label><input name="receipt" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required><button type="submit" style="margin-top:12px">إرسال الإيصال للمراجعة</button></form><div class="muted" style="margin-top:12px"><b>سجل الإيصالات</b></div><div class="receiptHistory">'+((receipts||[]).map(r=>'<div class="receipt">'+esc(r.amount)+' ريال · '+esc(r.requested_months)+' شهر · '+esc(r.status)+' · '+new Date(r.created_at).toLocaleDateString('ar-SA')+'</div>').join('')||'<div class="muted">لا توجد إيصالات.</div>')+'</div>';
+  $('stores').appendChild(el);
+ }
+ $('stores').querySelectorAll('.receiptForm').forEach(form=>form.addEventListener('submit',async e=>{
+  e.preventDefault();const btn=form.querySelector('button');const file=form.receipt.files[0];const months=Number(form.months.value);
+  if(!file||file.size>5*1024*1024){alert('اختر ملفاً لا يتجاوز 5 ميجابايت');return}
+  if(!['image/jpeg','image/png','image/webp','application/pdf'].includes(file.type)){alert('نوع الملف غير مدعوم');return}
+  btn.disabled=true;btn.textContent='جارٍ الإرسال...';
+  const storeId=form.dataset.store;const ext=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'bin';const path=storeId+'/'+crypto.randomUUID()+'.'+ext;
+  const {error:uploadError}=await sb.storage.from('subscription-receipts').upload(path,file,{upsert:false,contentType:file.type});
+  if(uploadError){btn.disabled=false;btn.textContent='إرسال الإيصال للمراجعة';alert(uploadError.message);return}
+  const {error:insertError}=await sb.from('payment_receipts').insert({store_id:storeId,submitted_by:user.id,receipt_path:path,amount:50*months,requested_months:months,status:'pending'});
+  if(insertError){btn.disabled=false;btn.textContent='إرسال الإيصال للمراجعة';alert('تعذر تسجيل الإيصال: '+insertError.message);return}
+  alert('تم إرسال الإيصال، وسيتم تفعيل الاشتراك بعد مراجعة مدير المنصة.');await loadStores(user);
+ }));
+}
+$('authForm').addEventListener('submit',async e=>{e.preventDefault();$('loginBtn').disabled=true;const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){msg($('authMsg'),error.message,'bad');return}await show()});
+$('signupBtn').addEventListener('click',async()=>{const {data,error}=await sb.auth.signUp({email:$('email').value.trim(),password:$('password').value});if(error){msg($('authMsg'),error.message,'bad');return}if(data.session)await show();else msg($('authMsg'),'تم إنشاء الحساب. افتح رسالة التأكيد في بريدك ثم سجّل الدخول.','ok')});
+$('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();await show()});
+sb.auth.onAuthStateChange(()=>setTimeout(()=>show(),0));show();
+</script>
+</body></html>
