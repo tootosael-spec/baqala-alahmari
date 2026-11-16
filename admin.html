@@ -61,20 +61,29 @@ document.getElementById('unitChoicesList').addEventListener('click',e=>{const b=
 
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
- const [p,c,s,ordersTotal,ordersToday]=await Promise.all([
-  supabase.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,category:store_categories(name),units:store_product_units(id,name,price,is_active,sort_order)').order('sort_order').order('name'),
-  supabase.from('store_categories').select('id,name').order('sort_order'),
+ const [c,p,u,s,ordersTotal,ordersToday]=await Promise.all([
+  supabase.from('store_categories').select('id,name,sort_order').order('sort_order'),
+  supabase.from('store_products').select('id,name,price,unit,emoji,image_url,is_active,category_id,sort_order').order('sort_order').order('name'),
+  supabase.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').order('sort_order'),
   supabase.from('store_settings').select('*').eq('id',1).single(),
   supabase.from('store_order_events').select('id',{count:'exact',head:true}),
   supabase.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
  ]);
- const error=p.error||c.error||s.error;if(error)throw error;
- if(ordersTotal.error||ordersToday.error)throw (ordersTotal.error||ordersToday.error);
- products=p.data||[];categories=c.data||[];settings=s.data||{};
+ if(c.error) throw c.error;
+ categories=c.data||[];
+ document.getElementById('statCats').textContent=categories.length;
+ document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
+ document.getElementById('categoryList').innerHTML=categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button></div>').join('');
+ document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
+ if(p.error||u.error||s.error) throw (p.error||u.error||s.error);
+ const unitsByProduct=new Map();
+ (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
+ const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
+ products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[]}));
+ settings=s.data||{};
  document.getElementById('statOrdersTotal').textContent=ordersTotal.count??0;
  document.getElementById('statOrdersToday').textContent=ordersToday.count??0;
  document.getElementById('statProducts').textContent=products.length;
- document.getElementById('statCats').textContent=categories.length;
  document.getElementById('statWhatsapp').textContent=settings.whatsapp_number?'مضاف ✓':'غير مضاف';
  document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
  const headerPreview=document.getElementById('headerImagePreview'),headerWrap=document.getElementById('headerImagePreviewWrap');
@@ -82,11 +91,9 @@ async function loadData(){
  document.getElementById('storePhone').value=settings.whatsapp_number||'';
  document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
  document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
- document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');syncUnitCategory();
- document.getElementById('categoryList').innerHTML=categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button></div>').join('');
- document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
- document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+(p.units||[]).map(u=>esc(u.name)+' '+money(u.price)).join('، ')+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
- document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle))); 
+ syncUnitCategory();
+ document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category.name)+' · '+(p.units||[]).map(u=>esc(u.name)+' '+money(u.price)).join('، ')+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
+ document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
 }
