@@ -86,7 +86,7 @@ const SUPABASE_URL='https://mjykxdxtjntozlnwikim.supabase.co';
 const SUPABASE_PUBLIC_KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35';
 const MANAGER_FUNCTION_URL=SUPABASE_URL+'/functions/v1/department-manager-access';
 const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
- auth:{storage:window.localStorage,storageKey:'baqala_owner_auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}
+ auth:{storage:window.localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}
 });
 const managerSupabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
  auth:{storage:window.localStorage,storageKey:'baqala_manager_auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit'}
