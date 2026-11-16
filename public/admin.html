@@ -264,7 +264,7 @@ async function loadData(){
  }else renderManagerCategoryChecks();
  syncUnitCategory();
 }
-let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null;
+let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null,loggingOut=false;
 async function enterAdmin(session){
  const user=session?.user;if(!user)return;
  if(enteringAdmin||activeAdminUserId===user.id)return;
@@ -324,7 +324,8 @@ async function restoreAdminSession(){
  finally{adminSessionReady=true;}
 }
 supabase.auth.onAuthStateChange((event,session)=>{
- if(event==='SIGNED_OUT'){
+ if(loggingOut)return;
+  if(event==='SIGNED_OUT'){
   activeAdminUserId=null;
   document.getElementById('adminApp').style.display='none';
   document.getElementById('authGate').style.display='block';
@@ -363,33 +364,32 @@ document.getElementById('offerForm').addEventListener('submit',async e=>{
  if(error){alert('تعذر حفظ العرض: '+error.message);return;}resetOfferForm();await loadData();alert('تم حفظ العرض بنجاح.');
 });
 document.getElementById('cancelOfferEdit').addEventListener('click',resetOfferForm);
-document.getElementById('logoutButton').addEventListener('click',async()=>{
+document.getElementById('logoutButton').addEventListener('click',()=>{
+ if(loggingOut)return;
+ loggingOut=true;
  const button=document.getElementById('logoutButton');
  button.disabled=true;
- button.textContent='جارٍ تسجيل الخروج...';
- // Hide the protected screen immediately; do not leave it visible while auth finishes.
+ button.textContent='تم تسجيل الخروج';
+ // Show the login screen immediately; do not wait for network or reload.
  document.getElementById('adminApp').style.display='none';
- try{
-  const {error}=await supabase.auth.signOut({scope:'local'});
-  if(error)console.warn('Supabase sign-out returned an error:',error);
- }catch(error){
-  console.warn('Supabase sign-out request failed; clearing this browser session locally:',error);
- }finally{
-  // This client uses Supabase's default localStorage key for this project.
-  // Clearing it also prevents a stale session from reopening the dashboard.
-  try{localStorage.removeItem('sb-mjykxdxtjntozlnwikim-auth-token');}catch(storageError){console.warn('Could not clear local auth storage:',storageError);}
-  activeAdminUserId=null;
-  currentRole='';
-  enteringAdmin=false;
-  document.getElementById('adminApp').style.display='none';
-  document.getElementById('authGate').style.display='block';
-  document.getElementById('authMessage').style.display='none';
-  document.getElementById('managerAuthMessage').style.display='none';
-  document.getElementById('loginForm').reset();
-  document.getElementById('managerCodeForm').reset();
-  // Reload the login screen without reusing a previously loaded admin document.
-  window.location.replace('/admin?logged_out='+Date.now());
- }
+ document.getElementById('authGate').style.display='block';
+ document.getElementById('authMessage').style.display='none';
+ document.getElementById('managerAuthMessage').style.display='none';
+ document.getElementById('loginForm').reset();
+ document.getElementById('managerCodeForm').reset();
+ activeAdminUserId=null;
+ currentRole='';
+ enteringAdmin=false;
+ try{localStorage.removeItem('sb-mjykxdxtjntozlnwikim-auth-token');}catch(storageError){console.warn('Could not clear local auth storage:',storageError);}
+ // Finish clearing Supabase's in-memory session in the background.
+ Promise.resolve(supabase.auth.signOut({scope:'local'})).catch(error=>{
+  console.warn('Supabase local sign-out failed:',error);
+ }).finally(()=>{
+  try{localStorage.removeItem('sb-mjykxdxtjntozlnwikim-auth-token');}catch(storageError){}
+  loggingOut=false;
+  button.disabled=false;
+  button.textContent='تسجيل الخروج';
+ });
 });
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
