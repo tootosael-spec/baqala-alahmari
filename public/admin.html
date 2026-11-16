@@ -475,24 +475,35 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
 });
 async function changeProductImage(id){
  const p=products.find(x=>x.id===id);if(!p)return;
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.style.display='none';document.body.appendChild(input);
- input.addEventListener('change',async()=>{
-  const file=input.files?.[0];if(!file){input.remove();return;}
-  if(!file.type.startsWith('image/')||file.size>5*1024*1024){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');input.remove();return;}
-  const button=document.querySelector('[data-edit-image="'+id+'"]');if(button){button.disabled=true;button.textContent='جارٍ رفع الصورة...';}
-  try{
-   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-   const path='products/'+p.category_id+'/'+crypto.randomUUID()+'.'+ext;
-   const {error:uploadError}=await supabase.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
-   if(uploadError)throw uploadError;
-   const image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-   const {error:updateError}=await supabase.from('store_products').update({image_url,updated_at:new Date().toISOString()}).eq('id',id);
-   if(updateError)throw updateError;
-   await loadData();alert('تم تحديث صورة المنتج بنجاح.');
-  }catch(error){alert('تعذر تحديث الصورة: '+(error?.message||error));if(button){button.disabled=false;button.textContent='تعديل صورة المنتج';}}
-  finally{input.remove();}
- });
- input.click();
+ const chooser=document.createElement('div');chooser.style.cssText='position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px';
+ const panel=document.createElement('div');panel.style.cssText='width:min(100%,360px);background:#fff;padding:20px;border-radius:16px;text-align:center;box-shadow:0 8px 32px #0003';
+ panel.innerHTML='<h3 style="margin:0 0 8px">تغيير صورة المنتج</h3><p class="item-meta">اختر مصدر الصورة</p><div style="display:grid;gap:10px;margin-top:16px"><button type="button" class="btn primary" id="chooseProductCamera">📷 التصوير بالكاميرا</button><button type="button" class="btn light" id="chooseProductGallery">🖼️ اختيار من الاستوديو</button><button type="button" class="btn light" id="cancelProductImage">إلغاء</button></div>';
+ chooser.appendChild(panel);document.body.appendChild(chooser);
+ const close=()=>chooser.remove();
+ panel.querySelector('#cancelProductImage').addEventListener('click',close);
+ function pickImage(useCamera){
+  const input=document.createElement('input');input.type='file';input.accept='image/*';if(useCamera)input.setAttribute('capture','environment');input.style.display='none';document.body.appendChild(input);
+  close();
+  input.addEventListener('change',async()=>{
+   const file=input.files?.[0];if(!file){input.remove();return;}
+   if(!file.type.startsWith('image/')||file.size>5*1024*1024){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');input.remove();return;}
+   const button=document.querySelector('[data-edit-image="'+id+'"]');if(button){button.disabled=true;button.textContent='جارٍ رفع الصورة...';}
+   try{
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path='products/'+p.category_id+'/'+crypto.randomUUID()+'.'+ext;
+    const {error:uploadError}=await supabase.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
+    if(uploadError)throw uploadError;
+    const image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+    const {error:updateError}=await supabase.from('store_products').update({image_url,updated_at:new Date().toISOString()}).eq('id',id);
+    if(updateError)throw updateError;
+    await loadData();alert('تم تحديث صورة المنتج بنجاح.');
+   }catch(error){alert('تعذر تحديث الصورة: '+(error?.message||error));if(button){button.disabled=false;button.textContent='تعديل صورة المنتج';}}
+   finally{input.remove();}
+  });
+  input.click();
+ }
+ panel.querySelector('#chooseProductCamera').addEventListener('click',()=>pickImage(true));
+ panel.querySelector('#chooseProductGallery').addEventListener('click',()=>pickImage(false));
 }
 async function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
