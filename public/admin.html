@@ -143,6 +143,7 @@ async function loadData(){
  ]);
  if(c.error||p.error||u.error)throw [c.error,p.error,u.error].find(Boolean);
  categories=c.data||[];
+ renderManagerCategoryChecks();
  document.getElementById('pCategory').innerHTML=categories.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');
  document.getElementById('statCats').textContent=categories.length;
  if(!managerMode){
