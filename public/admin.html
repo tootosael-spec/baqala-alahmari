@@ -31,6 +31,7 @@
 <div class="hint">المنتجات والإعدادات محفوظة الآن في قاعدة بيانات Supabase المشتركة. الدخول محمي بحساب صاحب المتجر وسياسات RLS. رفع الصور متاح عبر رابط مباشر حالياً، وتوليد الصور بالذكاء الاصطناعي يحتاج ربط خدمة مستقلة.</div>
 </section>
 </div>
+<section class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">يمكنك تغيير اسم القسم دون التأثير على المنتجات المرتبطة به.</p><div id="categoryList"></div></section>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
 
@@ -65,6 +66,8 @@ async function loadData(){
  document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
  document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
  document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
+ document.getElementById('categoryList').innerHTML=categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button></div>').join('');
+ document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
  document.getElementById('productList').innerHTML=products.length?products.map(p=>'<div class="item"><div class="item-main"><div class="thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt="">':esc(p.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(p.name)+'</div><div class="item-meta">'+esc(p.category?.name||'بدون قسم')+' · '+(p.units||[]).map(u=>esc(u.name)+' '+money(u.price)).join('، ')+' · '+(p.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+p.id+'">'+(p.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+p.id+'">تعديل</button><button class="btn danger" data-delete="'+p.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات حالياً.</p>';
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle))); 
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
@@ -134,4 +137,13 @@ async function toggleProduct(id){
  if(error){alert('تعذر تغيير ظهور المنتج: '+error.message);return;}await loadData();
 }
 async function removeProduct(id){if(!confirm('هل تريد حذف المنتج؟'))return;const {error}=await supabase.from('store_products').delete().eq('id',id);if(error){alert('تعذر حذف المنتج: '+error.message);return;}await loadData();}
+async function renameCategory(id){
+ const category=categories.find(c=>c.id===id);if(!category)return;
+ const name=prompt('اسم القسم الجديد',category.name);if(name===null)return;
+ if(!name.trim()){alert('اكتب اسم القسم');return;}
+ const {error}=await supabase.from('store_categories').update({name:name.trim()}).eq('id',id);
+ if(error){alert('تعذر تعديل اسم القسم: '+error.message);return;}
+ await loadData();
+}
+
 </script></body></html>
