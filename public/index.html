@@ -210,10 +210,10 @@ try {
   }
 }
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
-let products=[],categories=[],settings={},cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}'),active='الكل';
+let products=[],categories=[],settings={},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function persistCart(){localStorage.setItem('baqala_cart',JSON.stringify(cart));}
+function persistCart(){try{localStorage.setItem('baqala_cart',JSON.stringify(cart));}catch(error){console.warn('Could not save cart locally:',error);}}
 async function loadStore(){
  try{
   const [c,p,u,s]=await Promise.all([
