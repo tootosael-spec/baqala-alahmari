@@ -156,7 +156,19 @@
 
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+let createClient;
+try {
+  ({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm'));
+} catch (primaryError) {
+  try {
+    ({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));
+  } catch (fallbackError) {
+    console.error('Supabase library could not be loaded from either CDN:',primaryError,fallbackError);
+    document.getElementById('categories').innerHTML='<div class="empty-state">تعذر الاتصال بخدمة المتجر. تحقق من اتصال الإنترنت ثم أعد تحميل الصفحة.</div>';
+    document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً.</div>';
+    throw fallbackError;
+  }
+}
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
 let products=[],categories=[],settings={},cart=JSON.parse(localStorage.getItem('baqala_cart')||'{}'),active='الكل';
 const money=n=>Number(n).toFixed(2)+' ر.س';
@@ -196,8 +208,9 @@ async function loadStore(){
   renderProducts();renderCartSummary();
  }catch(error){
   console.error('Unexpected store loading error:',error);
-  document.getElementById('categories').innerHTML='';
-  document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل أقسام المتجر حالياً. أعد تحميل الصفحة.</div>';
+  if(categories.length) renderCats();
+  else document.getElementById('categories').innerHTML='<div class="empty-state">تعذر تحميل الأقسام حالياً. أعد تحميل الصفحة بعد قليل.</div>';
+  document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً. الأقسام محفوظة ولم يتم حذفها.</div>';
  }
 }
 function renderCats(){const names=['الكل',...categories.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
