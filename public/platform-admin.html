@@ -69,10 +69,10 @@ async function loadAll(){
  if(storesRes.error)throw storesRes.error;if(receiptsRes.error)throw receiptsRes.error;
  const stores=storesRes.data||[], receipts=receiptsRes.data||[];
  $('storeCount').textContent=stores.length;
- $('activeCount').textContent=stores.filter(s=>s.subscriptions?.[0]?.status==='active').length;
+ $('activeCount').textContent=stores.filter(s=>(Array.isArray(s.subscriptions)?s.subscriptions[0]:s.subscriptions)?.status==='active').length;
  $('pendingCount').textContent=receipts.filter(r=>r.status==='pending').length;
  $('storesList').innerHTML=stores.length?stores.map(s=>{
-  const sub=s.subscriptions?.[0]||{};
+  const sub=(Array.isArray(s.subscriptions)?s.subscriptions[0]:s.subscriptions)||{};
   return '<div class="store"><h3>'+esc(s.name)+'</h3><div class="muted">'+esc(s.slug)+' · '+esc(s.owner_email||'لم يحدد بريد المالك')+'</div><div><span class="tag">الاشتراك: '+esc(sub.status||'غير مسجل')+'</span><span class="tag">'+esc(sub.amount??50)+' '+esc(sub.currency||'SAR')+' شهرياً</span><span class="tag">حالة المشروع: '+esc(s.operational_status)+'</span></div><div class="row" style="margin-top:8px"><input type="email" id="owner-'+s.id+'" placeholder="بريد صاحب البقالة المسجل"><button class="secondary" data-link="'+s.id+'">ربط حساب المالك</button></div><div class="muted" style="margin-top:6px">معرّف البقالة: '+esc(s.id)+'</div></div>'
  }).join(''):'لا توجد بقالات مسجلة بعد.';
  $('storesList').querySelectorAll('[data-link]').forEach(btn=>btn.addEventListener('click',async()=>{
