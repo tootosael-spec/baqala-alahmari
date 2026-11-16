@@ -81,6 +81,7 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 </section>
 <section id="managerManagement" class="card products" style="display:none"><h3>إدارة مديري الأقسام</h3><p class="item-meta">أضف مديراً وحدد له قسماً أو أكثر. سيحصل على كود دخول خاص، ويمكنك تعديل أقسامه أو إيقافه أو إصدار كود جديد.</p><form id="managerForm"><label class="field"><span>اسم مدير القسم</span><input id="managerName" maxlength="80" required placeholder="اسم المدير"></label><div class="field"><span>الأقسام المسندة إليه</span><div id="managerCategoryChecks" class="item-meta">حمّل الأقسام أولاً.</div></div><div class="row"><button id="saveManagerButton" class="btn primary" type="submit">＋ إضافة مدير</button><button id="cancelManagerEdit" class="btn light" type="button" style="display:none">إلغاء التعديل</button></div></form><div id="managerList" style="margin-top:14px"></div></section><section id="categoryManagement" class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">أضف الأقسام أو عدّل أسماءها أو احذفها من هنا. حذف القسم لا يحذف المنتجات المرتبطة به.</p><form id="addCategoryForm" class="row" style="align-items:end"><label class="field"><span>اسم القسم الجديد</span><input id="newCategoryName" maxlength="60" placeholder="مثال: التموينات" required></label><button class="btn primary" type="submit" style="margin-bottom:11px">＋ إضافة قسم</button></form><div id="categoryList"></div></section>
 <section id="ordersManagement" class="card products"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">طلبات التوصيل</h3><button id="refreshOrdersButton" class="btn light" type="button">تحديث الطلبات ↻</button></div><p class="item-meta">تظهر الطلبات الجديدة بانتظار تأكيد الزبون، وتتغير إلى مؤكدة بعد ضغطه «تأكيد طلبي».</p><div id="ordersList" aria-live="polite">جارٍ تحميل الطلبات...</div></section>
+<section id="customerMessagesManagement" class="card products"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">طلبات المنتجات والشكاوى</h3><button id="refreshCustomerMessagesButton" class="btn light" type="button">تحديث ↻</button></div><p class="item-meta">طلبات المنتجات غير الموجودة وشكاوى الزبائن الواردة من واجهة المتجر.</p><div id="customerMessagesList" aria-live="polite">جارٍ تحميل الرسائل...</div></section>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
 
@@ -245,6 +246,35 @@ async function loadOrders(){
 }
 document.getElementById('refreshOrdersButton').addEventListener('click',loadOrders);
 
+
+function renderCustomerMessages(rows){
+ const list=document.getElementById('customerMessagesList');
+ if(!rows.length){list.innerHTML='<p class="item-meta">لا توجد طلبات منتجات أو شكاوى حالياً.</p>';return;}
+ list.innerHTML=rows.map(row=>{
+  const date=new Date(row.created_at).toLocaleString('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'});
+  const type=row.message_type==='product_request'?'طلب منتج غير موجود':'شكوى';
+  const title=row.message_type==='product_request'?row.product_name:row.subject;
+  const statusLabel={new:'جديد',in_progress:'قيد المراجعة',resolved:'تمت المعالجة'}[row.status]||row.status;
+  const actions=['new','in_progress','resolved'].filter(s=>s!==row.status).map(s=>'<button type="button" class="btn light" data-customer-message-status="'+s+'" data-customer-message-id="'+row.id+'">'+({new:'إعادة إلى جديد',in_progress:'قيد المراجعة',resolved:'تمت المعالجة'}[s])+'</button>').join('');
+  return '<article class="order-card" style="margin:12px 0"><div class="order-top"><span class="order-number">'+esc(type)+' · '+esc(title)+'</span><span class="order-status">'+esc(statusLabel)+'</span></div><div class="order-meta">'+date+'</div><p style="white-space:pre-wrap;line-height:1.8">'+esc(row.details)+'</p>'+(row.contact_phone?'<div class="order-extra"><b>رقم التواصل:</b> '+esc(row.contact_phone)+'</div>':'')+'<div class="actions" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">'+actions+'</div></article>';
+ }).join('');
+}
+async function loadCustomerMessages(){
+ const list=document.getElementById('customerMessagesList');
+ list.textContent='جارٍ تحميل الطلبات والشكاوى...';
+ const {data,error}=await supabase.from('store_customer_messages').select('id,message_type,product_name,subject,details,contact_phone,status,created_at').order('created_at',{ascending:false}).limit(100);
+ if(error){list.innerHTML='<p class="item-meta" role="alert">تعذر تحميل الرسائل: '+esc(error.message)+'</p>';return;}
+ renderCustomerMessages(data||[]);
+}
+document.getElementById('refreshCustomerMessagesButton').addEventListener('click',loadCustomerMessages);
+document.getElementById('customerMessagesList').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-customer-message-status]');if(!button)return;
+ button.disabled=true;
+ const {error}=await supabase.from('store_customer_messages').update({status:button.dataset.customerMessageStatus}).eq('id',button.dataset.customerMessageId);
+ if(error){alert('تعذر تحديث الحالة: '+error.message);button.disabled=false;return;}
+ await loadCustomerMessages();
+});
+
 async function loadData(){
  const managerMode=currentRole==='department_manager';
  const [c,p,u]=await Promise.all([
@@ -299,6 +329,7 @@ async function loadData(){
   await loadManagers();
  }else renderManagerCategoryChecks();
  await loadOrders();
+ if(!managerMode)await loadCustomerMessages();
  syncUnitCategory();
 }
 let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null,loggingOut=false,adminDataLoaded=false;
@@ -318,6 +349,7 @@ async function enterAdmin(session){
   document.getElementById('categoryManagement').style.display=owner?'block':'none';
   document.getElementById('managerManagement').style.display=owner?'block':'none';
   document.getElementById('offersCard').style.display=owner?'block':'none';
+  document.getElementById('customerMessagesManagement').style.display=owner?'block':'none';
   document.querySelector('.stats').style.display=owner?'grid':'none';
   document.querySelector('.welcome h2').textContent=owner?'مرحباً بك في لوحة تحكم المالك':'لوحة مدير القسم';
   document.querySelector('.welcome p').textContent=owner?'تابع منتجات متجرك وحدّث بياناته بسهولة.':'يمكنك إدارة المنتجات التابعة للأقسام المسندة إليك فقط.';
