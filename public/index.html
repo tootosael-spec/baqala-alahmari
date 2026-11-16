@@ -163,22 +163,39 @@ const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function persistCart(){localStorage.setItem('baqala_cart',JSON.stringify(cart));}
 async function loadStore(){
- const [p,c,s]=await Promise.all([
-  supabase.from('store_products').select('id,name,price,unit,emoji,image_url,category:store_categories(name),units:store_product_units(id,name,price,is_active,sort_order)').eq('is_active',true).order('sort_order').order('name'),
-  supabase.from('store_categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('store_settings').select('store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url').eq('id',1).maybeSingle()
- ]);
- const error=p.error||c.error||s.error;
- if(error){console.error(error);document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات. تأكد من تفعيل Data API وصلاحيات الجداول في Supabase.</div>';return;}
- categories=c.data||[];
- products=(p.data||[]).map(x=>({...x,category:x.category?.name||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units:(x.units||[]).filter(u=>u.is_active).sort((a,b)=>a.sort_order-b.sort_order).map(u=>({...u,price:Number(u.price)}))})).filter(x=>x.units.length);
- products.forEach(p=>{if(cart[p.id]){cart[p.id+'__'+p.units[0].id]=(cart[p.id+'__'+p.units[0].id]||0)+cart[p.id];delete cart[p.id];}});persistCart();
- settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30),headerImageUrl:s.data?.header_image_url||''};
- const headerEl=document.querySelector('.site-header');
- headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
- document.getElementById('storeTitle').textContent=settings.name;
- document.querySelector('.hero h2 span').textContent=settings.name;
- renderCats();renderProducts();renderCartSummary();
+ try{
+  const [p,c,u,s]=await Promise.all([
+   supabase.from('store_products').select('id,name,category_id,price,unit,emoji,image_url,sort_order').eq('is_active',true).order('sort_order').order('name'),
+   supabase.from('store_categories').select('id,name,sort_order').eq('is_active',true).order('sort_order'),
+   supabase.from('store_product_units').select('id,product_id,name,price,is_active,sort_order').eq('is_active',true).order('sort_order'),
+   supabase.from('store_settings').select('store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url').eq('id',1).maybeSingle()
+  ]);
+  const error=p.error||c.error||u.error||s.error;
+  if(error){
+   console.error('Store loading failed:',error);
+   document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات حالياً. أعد تحميل الصفحة بعد قليل.</div>';
+   return;
+  }
+  categories=c.data||[];
+  const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
+  const unitsByProduct=new Map();
+  (u.data||[]).forEach(x=>{
+   if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);
+   unitsByProduct.get(x.product_id).push({...x,price:Number(x.price)});
+  });
+  products=(p.data||[]).map(x=>({...x,category:categoryNames.get(x.category_id)||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units:unitsByProduct.get(x.id)||[]})).filter(x=>x.units.length);
+  products.forEach(p=>{if(cart[p.id]){cart[p.id+'__'+p.units[0].id]=(cart[p.id+'__'+p.units[0].id]||0)+cart[p.id];delete cart[p.id];}});
+  persistCart();
+  settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30),headerImageUrl:s.data?.header_image_url||''};
+  const headerEl=document.querySelector('.site-header');
+  headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
+  document.getElementById('storeTitle').textContent=settings.name;
+  document.querySelector('.hero h2 span').textContent=settings.name;
+  renderCats();renderProducts();renderCartSummary();
+ }catch(error){
+  console.error('Unexpected store loading error:',error);
+  document.getElementById('products').innerHTML='<div class="empty-state">حدث خطأ أثناء تحميل المتجر. أعد تحميل الصفحة.</div>';
+ }
 }
 function renderCats(){const names=['الكل',...categories.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;renderCats();renderProducts();}
