@@ -326,8 +326,24 @@ document.getElementById('logoutButton').addEventListener('click',async()=>{
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
- const units=chosenUnits.slice();
- if(!name||!units.length){alert('أدخل اسم المنتج وأضف وحدة واحدة على الأقل من القائمة');return;}
+ let units=chosenUnits.slice();
+ // Accept the unit currently selected in the dropdown even if the separate
+ // "إضافة الوحدة" button was not pressed.
+ if(!units.length){
+  const priceInput=document.getElementById('pUnitPrice');
+  const unitSelect=document.getElementById('pUnitChoice');
+  if(priceInput.value!==''){
+   const selectedPrice=Number(priceInput.value);
+   if(Number.isFinite(selectedPrice)&&selectedPrice>=0){
+    if(isVegetableCategory(category_id)){
+     units=unitSelect.value==='كيلو'?makeVegUnits(selectedPrice):[{name:'حبة',price:selectedPrice}];
+    }else{
+     units=[{name:unitSelect.value,price:selectedPrice}];
+    }
+   }
+  }
+ }
+ if(!name||!units.length){alert('أدخل اسم المنتج واختر الوحدة وأدخل سعرها');return;}
  if(manualImage&&!/^https?:\/\//i.test(manualImage)){alert('أدخل رابط صورة صحيحاً');return;}
  if(imageFile&&(!imageFile.type.startsWith('image/')||imageFile.size>5*1024*1024)){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');return;}
  let image_url=manualImage||null;
