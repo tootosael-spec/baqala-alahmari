@@ -4,8 +4,7 @@
   "main": "worker.js",
   "compatibility_date": "2026-11-16",
   "assets": {
-    "directory": ".",
-    "binding": "ASSETS",
-    "exclude": [".github/**", "wrangler.jsonc", "worker.js"]
+    "directory": "./public",
+    "binding": "ASSETS"
   }
 }
