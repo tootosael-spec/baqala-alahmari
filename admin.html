@@ -71,10 +71,10 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 <script type="module">
 let createClient;
 try {
-  ({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm'));
+  ({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm'));
 } catch (primaryError) {
   try {
-    ({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));
+    ({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.119.0'));
   } catch (fallbackError) {
     console.error('Supabase library could not be loaded from either CDN:',primaryError,fallbackError);
     const message=document.getElementById('authMessage');
