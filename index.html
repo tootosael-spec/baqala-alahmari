@@ -166,7 +166,7 @@ async function loadStore(){
  const [p,c,s]=await Promise.all([
   supabase.from('store_products').select('id,name,price,unit,emoji,image_url,category:store_categories(name),units:store_product_units(id,name,price,is_active,sort_order)').eq('is_active',true).order('sort_order').order('name'),
   supabase.from('store_categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('store_settings').select('store_name,whatsapp_number,delivery_fee,free_delivery_threshold').eq('id',1).maybeSingle()
+  supabase.from('store_settings').select('store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url').eq('id',1).maybeSingle()
  ]);
  const error=p.error||c.error||s.error;
  if(error){console.error(error);document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات. تأكد من تفعيل Data API وصلاحيات الجداول في Supabase.</div>';return;}
