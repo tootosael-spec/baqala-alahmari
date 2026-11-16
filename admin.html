@@ -316,14 +316,12 @@ async function restoreAdminSession(){
   showAuthGate('تعذر التحقق من جلسة الدخول بسبب الاتصال. أعد المحاولة أو حدّث الصفحة.');
  }finally{adminSessionReady=true;}
 }
-supabase.auth.onAuthStateChange((event,session)=>{
+supabase.auth.onAuthStateChange((event)=>{
  if(event==='SIGNED_OUT'){
   clearAdminState();
-  return;
  }
- if(event==='SIGNED_IN'&&session&&adminSessionReady){
-  queueMicrotask(()=>enterAdmin(session));
- }
+ // SIGNED_IN is handled directly by the login forms and restoreAdminSession().
+ // Avoid starting Supabase queries from inside the auth event cycle.
 });
 function refreshSuggestedEmoji(){
  const categoryId=document.getElementById('pCategory').value;
