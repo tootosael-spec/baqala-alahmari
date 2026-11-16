@@ -116,7 +116,23 @@
   @keyframes welcomePop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
   @media(prefers-reduced-motion:reduce){.welcome-popup.show,.welcome-card{animation:none}}
 
-  </style>
+  
+/* Mobile layout stability */
+html,body{width:100%;max-width:100%;overflow-x:clip}
+body{min-width:0}
+.site-header,.header-inner,.nav-line,.hero,.page-wrap,.section-head,.products,.product-card,.product-foot,.product-actions,.cart-dock-inner,.panel{min-width:0;max-width:100%}
+.categories{position:sticky;top:0;z-index:20;width:100%;max-width:100%;min-width:0;align-self:flex-start;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;touch-action:pan-x;overscroll-behavior-x:contain}
+.products{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+.product-foot{flex-wrap:wrap;align-items:flex-start}
+.product-actions{flex-wrap:wrap;min-width:0}
+.product-price{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.qty-control{white-space:normal;flex-wrap:wrap;min-width:0}
+.cart-dock-inner{flex-wrap:wrap}
+img,svg,video,iframe{max-width:100%}
+input,select,textarea{max-width:100%;min-width:0}
+@media(max-width:420px){.products{grid-template-columns:repeat(2,minmax(0,1fr))}.product-card{min-width:0}.product-foot{gap:6px}.product-actions{gap:4px}.qty-stepper{gap:5px}.qty-stepper button{width:26px;height:28px}}
+
+</style>
 
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
