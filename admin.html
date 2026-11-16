@@ -41,7 +41,19 @@
 </main>
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+let createClient;
+try {
+  ({createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm'));
+} catch (primaryError) {
+  try {
+    ({createClient}=await import('https://esm.sh/@supabase/supabase-js@2.57.0'));
+  } catch (fallbackError) {
+    console.error('Supabase library could not be loaded from either CDN:',primaryError,fallbackError);
+    const message=document.getElementById('authMessage');
+    if(message){message.style.display='block';message.textContent='تعذر تحميل خدمة الإدارة. تحقق من اتصال الإنترنت ثم أعد تحميل الصفحة.';}
+    throw fallbackError;
+  }
+}
 const supabase=createClient('https://mjykxdxtjntozlnwikim.supabase.co','sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35');
 const categoriesFallback=['الألبان والأجبان','المشروبات والعصائر','المخبوزات','المواد الغذائية','الحلويات والشوكولاتة','المنظفات','الخضار والفواكه','المعلبات'];
 let products=[],categories=[],settings={};
