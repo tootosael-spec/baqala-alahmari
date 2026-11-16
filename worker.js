@@ -5,9 +5,11 @@ const SUSPENDED_PAGE = `<!doctype html><html lang="ar" dir="rtl"><meta charset="
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const isMarketAlias =
+      url.pathname === "/market" || url.pathname === "/market/";
     const isStorefrontPage =
       request.method === "GET" &&
-      (url.pathname === "/" || url.pathname === "/index.html");
+      (url.pathname === "/" || url.pathname === "/index.html" || isMarketAlias);
 
     if (isStorefrontPage) {
       try {
@@ -31,6 +33,12 @@ export default {
       } catch (error) {
         // Fail open during a temporary central-service outage to protect existing storefront availability.
       }
+    }
+
+    // Serve the storefront at /market while keeping root and existing asset paths working.
+    if (request.method === "GET" && isMarketAlias) {
+      url.pathname = "/";
+      return env.ASSETS.fetch(new Request(url.toString(), request));
     }
 
     return env.ASSETS.fetch(request);
