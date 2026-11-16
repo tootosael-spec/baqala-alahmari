@@ -82,6 +82,7 @@
     .danger-btn{background:#fff0ed;color:#b83b2e}
     .line-item{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf0ed;padding:12px 0;gap:10px}
     .line-item:last-child{border-bottom:0}
+    .delivery-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 4px;padding:14px 15px;background:#eaf5ed;border:1px solid #cfe5d4;border-radius:14px;color:#174d30;font-size:14px}.delivery-summary strong{font-size:16px}
     .qty-control{display:flex;align-items:center;gap:9px;white-space:nowrap}
     .qty-control button{width:29px;height:29px;border:0;border-radius:9px;background:#edf4ee;color:#24573a;font-weight:700}
     .line-sub{font-size:11px;color:#87928a;margin-top:3px}
@@ -147,7 +148,7 @@
     <div class="panel">
       <div class="panel-head"><h2>سلة مشترياتك 🛍️</h2><button class="close-btn" onclick="closeModal('cartModal')">✕</button></div>
       <div id="cartItems"></div>
-      <div class="total-row"><span>الإجمالي</span><strong id="modalTotal">0.00 ر.س</strong></div>
+      <div class="delivery-summary"><span>🚚 قيمة التوصيل</span><strong id="deliveryFeeRow">0.00 ر.س</strong></div><div class="total-row"><span>الإجمالي شامل التوصيل</span><strong id="modalTotal">0.00 ر.س</strong></div>
       <label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" placeholder="أي تفاصيل إضافية؟"></label>
       <button class="send-btn" onclick="sendOrder()">إرسال الطلب عبر واتساب ↗</button>
       <p class="muted" style="text-align:center;margin:10px 0 0">سيتم فتح واتساب برسالة تحتوي تفاصيل طلبك.</p>
@@ -166,13 +167,13 @@ async function loadStore(){
  const [p,c,s]=await Promise.all([
   supabase.from('store_products').select('id,name,price,unit,emoji,image_url,category:store_categories(name)').eq('is_active',true).order('sort_order').order('name'),
   supabase.from('store_categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('store_settings').select('store_name,whatsapp_number').eq('id',1).maybeSingle()
+  supabase.from('store_settings').select('store_name,whatsapp_number,delivery_fee,free_delivery_threshold').eq('id',1).maybeSingle()
  ]);
  const error=p.error||c.error||s.error;
  if(error){console.error(error);document.getElementById('products').innerHTML='<div class="empty-state">تعذر تحميل المنتجات. تأكد من تفعيل Data API وصلاحيات الجداول في Supabase.</div>';return;}
  categories=c.data||[];
  products=(p.data||[]).map(x=>({...x,category:x.category?.name||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة'}));
- settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||''};
+ settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30)};
  document.getElementById('storeTitle').textContent=settings.name;
  document.querySelector('.hero h2 span').textContent=settings.name;
  renderCats();renderProducts();renderCartSummary();
@@ -181,13 +182,15 @@ function renderCats(){const names=['الكل',...categories.map(c=>c.name)];docu
 function setCategory(c){active=c;renderCats();renderProducts();}
 function renderProducts(){const q=document.getElementById('search').value.trim().toLowerCase();const list=products.filter(p=>(active==='الكل'||p.category===active)&&p.name.toLowerCase().includes(q));document.getElementById('productCount').textContent=list.length+' منتج';document.getElementById('products').innerHTML=list.length?list.map(p=>'<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+'</div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><div class="product-foot"><strong class="product-price">'+money(p.price)+' / '+esc(p.unit)+'</strong><button class="add-btn" data-add="'+esc(p.id)+'" >'+'＋ أضف'+'</button></div></article>').join(''):'<div class="empty-state"><div class="empty-icon">🔎</div><strong>ما لقينا هذا المنتج</strong><div class="muted">جرّب كلمة بحث ثانية أو اختر قسماً آخر.</div></div>';document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addCart(b.dataset.add)));}
 function addCart(id){cart[id]=(cart[id]||0)+1;persistCart();renderCartSummary();}
-function total(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0);}
+function subtotal(){return products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0);}
+function actualDeliveryFee(){return !products.some(p=>cart[p.id])||subtotal()>=settings.freeDeliveryThreshold?0:settings.deliveryFee;}
+function total(){return subtotal()+actualDeliveryFee();}
 function renderCartSummary(){const n=Object.values(cart).reduce((a,b)=>a+b,0);document.getElementById('cartTotal').textContent=money(total());document.getElementById('cartCount').textContent=n+' منتجات في السلة';document.getElementById('cartBadge').textContent=n;}
 window.openCart=function(){renderCart();document.getElementById('cartModal').style.display='block';};
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
-function renderCart(){const list=products.filter(p=>cart[p.id]);document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="line-item"><div><b>'+esc(p.name)+'</b><div class="line-sub">'+money(p.price)+' لكل '+esc(p.unit)+'</div></div><div class="qty-control"><button data-dec="'+esc(p.id)+'">−</button><b>'+cart[p.id]+'</b><button data-inc="'+esc(p.id)+'">+</button></div><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong></div>';document.getElementById('modalTotal').textContent=money(total());document.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.dec,-1)));document.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.inc,1)));}
+function renderCart(){const list=products.filter(p=>cart[p.id]);document.getElementById('cartItems').innerHTML=list.length?list.map(p=>'<div class="line-item"><div><b>'+esc(p.name)+'</b><div class="line-sub">'+money(p.price)+' لكل '+esc(p.unit)+'</div></div><div class="qty-control"><button data-dec="'+esc(p.id)+'">−</button><b>'+cart[p.id]+'</b><button data-inc="'+esc(p.id)+'">+</button></div><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(''):'<div class="empty-state"><div class="empty-icon">🛒</div><strong>سلتك فارغة حالياً</strong></div>';document.getElementById('deliveryFeeRow').textContent=actualDeliveryFee()===0?'مجاني':money(actualDeliveryFee());document.getElementById('modalTotal').textContent=money(total());document.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.dec,-1)));document.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.inc,1)));}
 function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];persistCart();renderCart();renderCartSummary();}
-window.sendOrder=function(){const list=products.filter(p=>cart[p.id]);if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const orderNo='BAQ-'+Date.now().toString().slice(-8);const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);const lines=list.map(p=>p.name+'\nعدد '+arabicNum(cart[p.id])+' '+(p.unit||'حبة')+'\nإجمالي '+arabicNum(p.price*cart[p.id])+' ريال');let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\nرقم الطلب: '+orderNo+'\n\n'+lines.join('\n')+'\n\nالإجمالي: '+money(total());const note=document.getElementById('orderNote').value.trim();if(note)msg+='\n\nملاحظات: '+note;msg='*'+msg+'*';const wa=window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');if(!wa){alert('تعذر فتح واتساب. اسمح بفتح النوافذ المنبثقة ثم أعد المحاولة.');return;}supabase.from('store_order_events').insert({}).then(({error})=>{if(error)console.error('تعذر تسجيل إحصائية الطلب:',error);});cart={};persistCart();document.getElementById('orderNote').value='';renderCart();renderCartSummary();closeModal('cartModal');};
+window.sendOrder=function(){const list=products.filter(p=>cart[p.id]);if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const orderNo='BAQ-'+Date.now().toString().slice(-8);const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);const lines=list.map(p=>p.name+'\nعدد '+arabicNum(cart[p.id])+' '+(p.unit||'حبة')+'\nإجمالي '+arabicNum(p.price*cart[p.id])+' ريال');let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\n\nرقم الطلب: '+orderNo+'\n\n'+lines.join('\n-----\n')+'\n-----\nرسوم التوصيل: '+(actualDeliveryFee()===0?'مجاني':money(actualDeliveryFee()))+'\n-----\nالإجمالي: '+money(total());const note=document.getElementById('orderNote').value.trim();if(note)msg+='\n\nملاحظات: '+note;msg='*'+msg+'*';const wa=window.open('https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg),'_blank');if(!wa){alert('تعذر فتح واتساب. اسمح بفتح النوافذ المنبثقة ثم أعد المحاولة.');return;}supabase.from('store_order_events').insert({}).then(({error})=>{if(error)console.error('تعذر تسجيل إحصائية الطلب:',error);});cart={};persistCart();document.getElementById('orderNote').value='';renderCart();renderCartSummary();closeModal('cartModal');};
 document.getElementById('search').addEventListener('input',renderProducts);
 await loadStore();
 supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'public',table:'store_products'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_categories'},loadStore).on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},loadStore).subscribe();
