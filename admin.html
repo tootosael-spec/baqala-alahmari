@@ -16,7 +16,7 @@
 <div class="layout">
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
-<div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><label class="field"><span>وحدات البيع والأسعار</span><textarea id="pUnits" required placeholder="حبة | 1\nكرتون | 10\nباكيت | 5"></textarea></label><p class="item-meta">اكتب كل وحدة في سطر مستقل بهذا الشكل: اسم الوحدة | السعر. مثال: حبة | 1. في قسم الخضار والفواكه أدخل سعر كيلو واحد فقط (كيلو | 8)، وسيُحسب نص الكيلو وربع الكيلو تلقائياً.</p>
+<div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><div class="field"><span>وحدات البيع والأسعار</span><div class="row"><select id="pUnitChoice" class="field"><option>حبة</option><option>كيلو</option><option>نصف كيلو</option><option>ربع كيلو</option><option>باكيت</option><option>كرتون</option><option>كيس</option><option>علبة</option><option>لتر</option></select><input id="pUnitPrice" type="number" min="0" step="0.01" placeholder="السعر"></div><button class="btn light" type="button" id="addUnitBtn">＋ إضافة الوحدة</button><div id="unitChoicesList" class="item-meta">لم تتم إضافة وحدات بعد.</div></div><p class="item-meta" id="unitHelp">اختر الوحدة من القائمة وأدخل سعرها ثم اضغط إضافة الوحدة. يمكن إضافة أكثر من وحدة.</p>
 <label class="field"><span>رمز تعبيري احتياطي</span><input id="pEmoji" maxlength="4" placeholder="🥛"></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><p id="imageStatus" class="item-meta">يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال. الحد الأقصى 5 ميجابايت.</p>
 <div class="ai"><strong>✨ صور المنتجات بالذكاء الاصطناعي</strong><p>سيظهر هنا خيار إنشاء صورة تلقائياً بعد ربط خدمة توليد الصور بمفتاح API آمن على الخادم. لم يتم تفعيل التوليد بعد حتى لا نعرض زرّاً يوهمك بأنه يعمل.</p><button class="btn light disabled" type="button" disabled>توليد صورة بالذكاء الاصطناعي — قريباً</button></div>
 <button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
@@ -49,6 +49,16 @@ const money=n=>Number(n).toFixed(2)+' ر.س';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function parseUnits(raw){return raw.split(/\r?\n/).map(line=>{const parts=line.split('|');const name=(parts[0]||'').trim(),price=Number((parts[1]||'').trim());return name&&parts.length>=2&&parts[1].trim()!==''&&Number.isFinite(price)&&price>=0?{name,price}:null;}).filter(Boolean);}
 function prepareUnits(raw,categoryId){const units=parseUnits(raw);const category=categories.find(c=>c.id===categoryId)?.name||'';if(!/خضار/.test(category))return units;const kilo=units.find(u=>/^(كيلو|الكيلو)$/i.test(u.name.trim()))||units[0];if(!kilo)return [];const price=Math.round(kilo.price*100)/100;return [{name:'كيلو',price},{name:'نص كيلو',price:Math.round(price/2*100)/100},{name:'ربع كيلو',price:Math.round(price/4*100)/100}];}
+const unitOptions=['حبة','كيلو','نصف كيلو','ربع كيلو','باكيت','كرتون','كيس','علبة','لتر'];
+let chosenUnits=[];
+function isVegetableCategory(id){return /خضار/.test(categories.find(x=>x.id===id)?.name||'');}
+function makeVegUnits(price){const n=Number(price);if(!Number.isFinite(n)||n<0)return [];return [{name:'كيلو',price:n},{name:'نص كيلو',price:Math.round(n/2*100)/100},{name:'ربع كيلو',price:Math.round(n/4*100)/100}];}
+function renderChosenUnits(){const el=document.getElementById('unitChoicesList');if(!el)return;el.innerHTML=chosenUnits.length?chosenUnits.map((u,i)=>'<span>'+esc(u.name)+' — '+money(u.price)+' <button type="button" class="btn light" data-remove-unit="'+i+'">حذف</button></span>').join('<br>'):'لم تتم إضافة وحدات بعد.';}
+function syncUnitCategory(){const veg=isVegetableCategory(document.getElementById('pCategory').value),sel=document.getElementById('pUnitChoice'),help=document.getElementById('unitHelp');if(veg){sel.value='كيلو';sel.disabled=true;help.textContent='قسم الخضار: أدخل سعر الكيلو فقط، وسيُضاف كيلو ونصف كيلو وربع كيلو بأسعار محسوبة تلقائياً.';}else{sel.disabled=false;help.textContent='اختر الوحدة من القائمة وأدخل سعرها ثم اضغط إضافة الوحدة. يمكن إضافة أكثر من وحدة.';}chosenUnits=[];renderChosenUnits();}
+document.getElementById('pCategory').addEventListener('change',syncUnitCategory);
+document.getElementById('addUnitBtn').addEventListener('click',()=>{const price=Number(document.getElementById('pUnitPrice').value);if(document.getElementById('pUnitPrice').value===''||!Number.isFinite(price)||price<0){alert('أدخل سعر الوحدة');return;}if(isVegetableCategory(document.getElementById('pCategory').value)){chosenUnits=makeVegUnits(price);}else{const name=document.getElementById('pUnitChoice').value;if(chosenUnits.some(u=>u.name===name)){alert('هذه الوحدة مضافة بالفعل');return;}chosenUnits.push({name,price});}renderChosenUnits();});
+document.getElementById('unitChoicesList').addEventListener('click',e=>{const b=e.target.closest('[data-remove-unit]');if(!b)return;chosenUnits.splice(Number(b.dataset.removeUnit),1);renderChosenUnits();});
+
 function showMessage(message){const el=document.getElementById('authMessage');el.textContent=message;el.style.display='block';}
 async function loadData(){
  const [p,c,s,ordersTotal,ordersToday]=await Promise.all([
@@ -100,8 +110,8 @@ document.getElementById('logoutButton').addEventListener('click',()=>supabase.au
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
- const units=prepareUnits(document.getElementById('pUnits').value,category_id);
- if(!name||!units.length){alert('أدخل اسم المنتج ووحدة واحدة على الأقل بصيغة: حبة | 1');return;}
+ const units=chosenUnits.slice();
+ if(!name||!units.length){alert('أدخل اسم المنتج وأضف وحدة واحدة على الأقل من القائمة');return;}
  if(manualImage&&!/^https?:\/\//i.test(manualImage)){alert('أدخل رابط صورة صحيحاً');return;}
  if(imageFile&&(!imageFile.type.startsWith('image/')||imageFile.size>5*1024*1024)){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');return;}
  let image_url=manualImage||null;
@@ -117,7 +127,7 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
  if(error){alert('تعذر إضافة المنتج: '+error.message);return;}
  const {error:unitError}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:created.id,sort_order:i})));
  if(unitError){alert('تم إنشاء المنتج لكن تعذر حفظ وحداته: '+unitError.message);return;}
- e.target.reset();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال.';await loadData();
+ e.target.reset();chosenUnits=[];renderChosenUnits();syncUnitCategory();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال.';await loadData();
 });
 document.getElementById('headerImageFile').addEventListener('change',e=>{
  const file=e.target.files[0],status=document.getElementById('headerImageStatus');
@@ -153,17 +163,26 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
 async function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const name=prompt('اسم المنتج',p.name);if(name===null)return;
- const initial=(p.units||[]).map(u=>u.name+' | '+u.price).join('\n')||((p.unit||'حبة')+' | '+p.price);
- const unitsText=prompt(/خضار/.test(p.category?.name||'')?'أدخل سعر الكيلو فقط بهذا الشكل: كيلو | 8. سيتم حساب نص كيلو وربع كيلو تلقائياً.':'وحدات البيع والأسعار، كل وحدة في سطر بصيغة: الوحدة | السعر',initial);if(unitsText===null)return;
- const units=prepareUnits(unitsText,p.category_id);if(!name.trim()||!units.length){alert('تأكد من إدخال وحدة واحدة على الأقل بصيغة: حبة | 1');return;}
+ const veg=/خضار/.test(p.category?.name||'');
+ let units=veg?makeVegUnits((p.units||[]).find(u=>u.name==='كيلو')?.price??p.price):(p.units||[]).map(u=>({name:u.name,price:Number(u.price)}));
+ const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;background:#0008;z-index:9999;display:grid;place-items:center;padding:16px';
+ const panel=document.createElement('div');panel.className='card';panel.style.cssText='width:min(100%,460px);max-height:85vh;overflow:auto;background:white;padding:18px;border-radius:16px';
+ panel.innerHTML='<h3>تعديل وحدات المنتج</h3><p class="item-meta">'+(veg?'أدخل سعر الكيلو وسيتم حساب النصف والربع تلقائياً.':'اختر الوحدة من القائمة وأدخل سعرها، ويمكنك إضافة أكثر من وحدة.')+'</p><div class="row"><select id="editUnitChoice" class="field">'+unitOptions.map(x=>'<option>'+x+'</option>').join('')+'</select><input id="editUnitPrice" type="number" min="0" step="0.01" placeholder="السعر" class="field"></div><button type="button" class="btn light" id="editAddUnit">'+(veg?'تحديث أسعار الخضار':'＋ إضافة الوحدة')+'</button><div id="editUnitsList" class="item-meta" style="margin:12px 0"></div><div class="row"><button type="button" class="btn primary" id="editSaveUnits">حفظ</button><button type="button" class="btn light" id="editCancelUnits">إلغاء</button></div>';
+ overlay.appendChild(panel);document.body.appendChild(overlay);
+ const list=panel.querySelector('#editUnitsList'),sel=panel.querySelector('#editUnitChoice'),price=panel.querySelector('#editUnitPrice'),add=panel.querySelector('#editAddUnit');
+ if(veg){sel.value='كيلو';sel.disabled=true;price.value=(p.units||[]).find(u=>u.name==='كيلو')?.price??p.price;}
+ function draw(){list.innerHTML=units.length?units.map((u,i)=>'<div>'+esc(u.name)+' — '+money(u.price)+' '+(veg?'':'<button type="button" class="btn light" data-del="'+i+'">حذف</button>')+'</div>').join(''):'لم تتم إضافة وحدات بعد.';}
+ draw();
+ add.addEventListener('click',()=>{const n=Number(price.value);if(price.value===''||!Number.isFinite(n)||n<0){alert('أدخل سعراً صحيحاً');return;}if(veg){units=makeVegUnits(n);}else{if(units.some(u=>u.name===sel.value)){alert('هذه الوحدة مضافة بالفعل');return;}units.push({name:sel.value,price:n});}draw();});
+ list.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b)return;units.splice(Number(b.dataset.del),1);draw();});
+ panel.querySelector('#editCancelUnits').onclick=()=>overlay.remove();
+ panel.querySelector('#editSaveUnits').onclick=async()=>{if(!name.trim()||!units.length){alert('أضف وحدة واحدة على الأقل');return;}
  const {error}=await supabase.from('store_products').update({name:name.trim(),price:units[0].price,unit:units[0].name,updated_at:new Date().toISOString()}).eq('id',id);
  if(error){alert('تعذر تعديل المنتج: '+error.message);return;}
- const {error:deleteError}=await supabase.from('store_product_units').delete().eq('product_id',id);
- if(deleteError){alert('تعذر تحديث وحدات المنتج: '+deleteError.message);return;}
- const {error:unitError}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:id,sort_order:i})));
- if(unitError){alert('تعذر حفظ وحدات المنتج: '+unitError.message);return;}await loadData();
-}
-async function toggleProduct(id){
+ const {error:de}=await supabase.from('store_product_units').delete().eq('product_id',id);if(de){alert('تعذر تحديث وحدات المنتج: '+de.message);return;}
+ const {error:ue}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:id,sort_order:i})));if(ue){alert('تعذر حفظ وحدات المنتج: '+ue.message);return;}
+ overlay.remove();await loadData();};
+}async function toggleProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const next=!p.is_active;
  const {error}=await supabase.from('store_products').update({is_active:next,updated_at:new Date().toISOString()}).eq('id',id);
