@@ -40,6 +40,19 @@
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
 
+<div id="generatedManagerCodeModal" style="display:none;position:fixed;inset:0;background:#0009;z-index:10000;align-items:center;justify-content:center;padding:16px">
+ <section class="card" role="dialog" aria-modal="true" aria-labelledby="generatedCodeTitle" style="width:min(100%,440px);background:#fff;padding:20px">
+  <h3 id="generatedCodeTitle" style="margin-top:0">كود مدير القسم</h3>
+  <p class="item-meta">انسخ الكود واحتفظ به، ثم أرسله للمدير بشكل خاص. لن يظهر مرة أخرى بعد إغلاق هذه النافذة.</p>
+  <input id="generatedManagerCodeValue" readonly dir="ltr" style="width:100%;font-size:17px;font-weight:700;text-align:center;letter-spacing:1px;padding:13px;border:1px solid #ccd5ce;border-radius:9px;background:#f7faf7">
+  <div class="row" style="margin-top:12px">
+   <button type="button" class="btn primary" id="copyGeneratedManagerCode" style="flex:1">نسخ الكود</button>
+   <button type="button" class="btn light" id="closeGeneratedManagerCode">إغلاق</button>
+  </div>
+  <p id="generatedManagerCodeStatus" class="hint" aria-live="polite"></p>
+ </section>
+</div>
+
 <script type="module">
 let createClient;
 try {
@@ -113,13 +126,29 @@ function resetManagerForm(){
  editingManagerId=null;document.getElementById('managerForm').reset();renderManagerCategoryChecks();
  document.getElementById('saveManagerButton').textContent='＋ إضافة مدير';document.getElementById('cancelManagerEdit').style.display='none';
 }
+
+async function showGeneratedManagerCode(code,message){
+ const modal=document.getElementById('generatedManagerCodeModal');
+ const field=document.getElementById('generatedManagerCodeValue');
+ const status=document.getElementById('generatedManagerCodeStatus');
+ field.value=code;status.textContent=message;modal.style.display='flex';
+ document.getElementById('copyGeneratedManagerCode').onclick=async()=>{
+  try{
+   if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(field.value);}
+   else{field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');if(!copied)throw new Error('copy failed');}
+   status.textContent='تم نسخ الكود. يمكنك لصقه وإرساله للمدير.';
+  }catch(e){field.focus();field.select();field.setSelectionRange(0,field.value.length);status.textContent='حدد الكود ثم اختر نسخ من قائمة جهازك.';}
+ };
+ document.getElementById('closeGeneratedManagerCode').onclick=()=>{modal.style.display='none';field.value='';};
+ modal.onclick=e=>{if(e.target===modal){modal.style.display='none';field.value='';}};
+}
 document.getElementById('managerForm').addEventListener('submit',async e=>{
  e.preventDefault();const name=document.getElementById('managerName').value.trim(),categoryIds=selectedManagerCategories();
  if(!categoryIds.length){alert('اختر قسماً واحداً على الأقل');return;}
  const btn=document.getElementById('saveManagerButton');btn.disabled=true;
  try{
   if(editingManagerId){await managerApi('update',{id:editingManagerId,name,categoryIds});alert('تم تحديث بيانات المدير وأقسامه.');}
-  else{const result=await managerApi('create',{name,categoryIds});alert('تم إنشاء مدير القسم. احفظ الكود التالي وسلّمه للمدير؛ لن يظهر مرة أخرى:\n\n'+result.code);}
+  else{const result=await managerApi('create',{name,categoryIds});await showGeneratedManagerCode(result.code,'تم إنشاء مدير القسم. انسخ الكود واحفظه قبل إغلاق النافذة.');}
   resetManagerForm();await loadManagers();
  }catch(err){alert('تعذر حفظ المدير: '+err.message);}finally{btn.disabled=false;}
 });
@@ -127,7 +156,7 @@ document.getElementById('cancelManagerEdit').addEventListener('click',resetManag
 async function toggleManager(id){const m=managers.find(x=>x.id===id);if(!m)return;try{await managerApi('set-active',{id,is_active:!m.is_active});await loadManagers();}catch(e){alert('تعذر تغيير حالة المدير: '+e.message);}}
 async function rotateManagerCode(id){
  if(!confirm('سيتم إلغاء الكود السابق وإصدار كود جديد. هل تريد المتابعة؟'))return;
- try{const result=await managerApi('rotate-code',{id});alert('الكود الجديد للمدير، احفظه وسلّمه له:\n\n'+result.code);await loadManagers();}catch(e){alert('تعذر إصدار الكود: '+e.message);}
+ try{const result=await managerApi('rotate-code',{id});await showGeneratedManagerCode(result.code,'تم إصدار كود جديد. الكود السابق لم يعد صالحاً. انسخ الكود الجديد.');await loadManagers();}catch(e){alert('تعذر إصدار الكود: '+e.message);}
 }
 async function deleteManager(id){
  const m=managers.find(x=>x.id===id);if(!m||!confirm('حذف مدير القسم "'+m.name+'" وإلغاء صلاحياته نهائياً؟'))return;
