@@ -82,6 +82,7 @@
     .danger-btn{background:#fff0ed;color:#b83b2e}
     .line-item{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf0ed;padding:12px 0;gap:10px}
     .line-item:last-child{border-bottom:0}
+    .delivery-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 4px;padding:14px 15px;background:#eaf5ed;border:1px solid #cfe5d4;border-radius:14px;color:#174d30;font-size:14px}.delivery-summary strong{font-size:16px}
     .qty-control{display:flex;align-items:center;gap:9px;white-space:nowrap}
     .qty-control button{width:29px;height:29px;border:0;border-radius:9px;background:#edf4ee;color:#24573a;font-weight:700}
     .line-sub{font-size:11px;color:#87928a;margin-top:3px}
@@ -147,7 +148,7 @@
     <div class="panel">
       <div class="panel-head"><h2>سلة مشترياتك 🛍️</h2><button class="close-btn" onclick="closeModal('cartModal')">✕</button></div>
       <div id="cartItems"></div>
-      <div class="line-item"><span>قيمة التوصيل</span><strong id="deliveryFeeRow">0.00 ر.س</strong></div><div class="total-row"><span>الإجمالي شامل التوصيل</span><strong id="modalTotal">0.00 ر.س</strong></div>
+      <div class="delivery-summary"><span>🚚 قيمة التوصيل</span><strong id="deliveryFeeRow">0.00 ر.س</strong></div><div class="total-row"><span>الإجمالي شامل التوصيل</span><strong id="modalTotal">0.00 ر.س</strong></div>
       <label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" placeholder="أي تفاصيل إضافية؟"></label>
       <button class="send-btn" onclick="sendOrder()">إرسال الطلب عبر واتساب ↗</button>
       <p class="muted" style="text-align:center;margin:10px 0 0">سيتم فتح واتساب برسالة تحتوي تفاصيل طلبك.</p>
