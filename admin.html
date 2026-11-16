@@ -33,9 +33,9 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 <section class="card"><h3>إضافة منتج جديد</h3><form id="addProductForm">
 <label class="field"><span>اسم المنتج</span><input id="pName" placeholder="مثال: حليب كامل الدسم"></label>
 <div class="row"><label class="field"><span>القسم</span><select id="pCategory"></select></label></div><div class="field"><span>وحدات البيع والأسعار</span><div class="row"><select id="pUnitChoice" class="field"><option>حبة</option><option>كيلو</option><option>نصف كيلو</option><option>ربع كيلو</option><option>باكيت</option><option>كرتون</option><option>كيس</option><option>علبة</option><option>لتر</option></select><input id="pUnitPrice" type="number" min="0" step="0.01" placeholder="السعر"></div><button class="btn light" type="button" id="addUnitBtn">＋ إضافة الوحدة</button><div id="unitChoicesList" class="item-meta">لم تتم إضافة وحدات بعد.</div></div><p class="item-meta" id="unitHelp">اختر الوحدة من القائمة وأدخل سعرها ثم اضغط إضافة الوحدة. يمكن إضافة أكثر من وحدة.</p>
-<label class="field"><span>أيقونة المنتج (تُختار تلقائياً ويمكن تغييرها)</span><input id="pEmoji" maxlength="8" value="🛒" placeholder="🥛"><small class="item-meta">اكتب اسم المنتج وستُقترح أيقونة مناسبة تلقائياً، ويمكنك تعديلها يدوياً.</small></label><label class="field"><span>صورة المنتج من الجوال (الكاميرا أو المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="height:auto;padding:10px"></label><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><button class="btn light full" type="button" id="searchProductImageBtn">🔎 ابحث عن صورة جاهزة باسم الصنف</button><div id="selectedImagePreview" style="display:none;margin-top:10px"><img id="selectedImagePreviewImg" alt="معاينة صورة المنتج المختارة" style="width:100%;height:130px;object-fit:contain;background:#f4f7f4;border-radius:12px"><p id="selectedImageCredit" class="item-meta"></p></div><p id="imageStatus" class="item-meta">ابحث باسم الصنف واختر صورة جاهزة، أو ارفع صورة من جوالك. الصور الجاهزة من مصادر مفتوحة.</p>
+<label class="field"><span>أيقونة المنتج (تُختار تلقائياً ويمكن تغييرها)</span><input id="pEmoji" maxlength="8" value="🛒" placeholder="🥛"><small class="item-meta">اكتب اسم المنتج وستُقترح أيقونة مناسبة تلقائياً، ويمكنك تعديلها يدوياً.</small></label><div class="field"><span>صورة المنتج (تصوير أو من المعرض)</span><input id="pImageFile" type="file" accept="image/*" style="display:none"><div class="row"><button class="btn light" type="button" id="takeProductPhoto">📷 تصوير المنتج</button><button class="btn light" type="button" id="chooseProductPhoto">🖼️ اختيار من المعرض</button></div><div id="productPhotoPreviewWrap" style="display:none;margin-top:10px"><img id="productPhotoPreview" alt="معاينة صورة المنتج" style="width:100%;height:180px;object-fit:contain;background:#fff;border:1px solid #e7ede7;border-radius:12px"><p id="productPhotoProcessingStatus" class="item-meta" aria-live="polite">جارٍ تجهيز الصورة...</p></div></div><label class="field"><span>أو رابط صورة (اختياري)</span><input id="pImage" type="url" placeholder="https://..."></label><button class="btn light full" type="button" id="searchProductImageBtn">🔎 ابحث عن صورة جاهزة باسم الصنف</button><div id="selectedImagePreview" style="display:none;margin-top:10px"><img id="selectedImagePreviewImg" alt="معاينة صورة المنتج المختارة" style="width:100%;height:130px;object-fit:contain;background:#f4f7f4;border-radius:12px"><p id="selectedImageCredit" class="item-meta"></p></div><p id="imageStatus" class="item-meta">ابحث باسم الصنف واختر صورة جاهزة، أو ارفع صورة من جوالك. الصور الجاهزة من مصادر مفتوحة.</p>
 
-<button class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
+<button id="addProductSubmitBtn" class="btn primary full" style="margin-top:14px" type="submit">＋ إضافة المنتج</button></form>
 </section>
 <section id="settingsCard" class="card"><h3>إعدادات المتجر</h3><form id="settingsForm">
 <label class="field"><span>اسم المتجر</span><input id="storeName" placeholder="بقالة الأحمري"></label>
@@ -427,9 +427,82 @@ document.getElementById('logoutButton').addEventListener('click',async()=>{
   alert('تعذر تسجيل الخروج: '+(error.message||'تحقق من الاتصال ثم حاول مجدداً.'));
  }finally{button.disabled=false;button.textContent='تسجيل الخروج';}
 });
+
+// تجهيز صورة المنتج تلقائياً بخلفية بيضاء قبل رفعها إلى مكتبة صور المتجر.
+let processedProductImageFile=null;
+let productImageProcessing=false;
+let productImageProcessingPromise=Promise.resolve();
+let productPhotoPreviewUrl=null;
+const productImageInput=document.getElementById('pImageFile');
+const productPhotoStatus=document.getElementById('productPhotoProcessingStatus');
+const productPhotoPreviewWrap=document.getElementById('productPhotoPreviewWrap');
+const productPhotoPreview=document.getElementById('productPhotoPreview');
+document.getElementById('takeProductPhoto').addEventListener('click',()=>{
+ productImageInput.setAttribute('capture','environment');
+ productImageInput.click();
+});
+document.getElementById('chooseProductPhoto').addEventListener('click',()=>{
+ productImageInput.removeAttribute('capture');
+ productImageInput.click();
+});
+async function processSelectedProductPhoto(file){
+ if(!file)return;
+ processedProductImageFile=null;
+ if(!file.type.startsWith('image/')||file.size>5*1024*1024){
+  alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');
+  productImageInput.value='';
+  productPhotoPreviewWrap.style.display='none';
+  return;
+ }
+ if(productPhotoPreviewUrl)URL.revokeObjectURL(productPhotoPreviewUrl);
+ productPhotoPreviewUrl=URL.createObjectURL(file);
+ productPhotoPreview.src=productPhotoPreviewUrl;
+ productPhotoPreviewWrap.style.display='block';
+ productImageProcessing=true;
+ document.getElementById('addProductSubmitBtn').disabled=true;
+ productPhotoStatus.textContent='جارٍ تحميل أداة إزالة الخلفية...';
+ productImageProcessingPromise=(async()=>{
+  try{
+   const {removeBackground}=await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+   productPhotoStatus.textContent='جارٍ عزل المنتج وتحويل الخلفية إلى الأبيض...';
+   const transparentBlob=await removeBackground(file,{model:'medium',output:{format:'image/png',quality:1}});
+   const bitmap=await createImageBitmap(transparentBlob);
+   const canvas=document.createElement('canvas');
+   canvas.width=bitmap.width;canvas.height=bitmap.height;
+   const ctx=canvas.getContext('2d');
+   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   const margin=Math.round(Math.min(canvas.width,canvas.height)*.06);
+   const scale=Math.min((canvas.width-margin*2)/bitmap.width,(canvas.height-margin*2)/bitmap.height);
+   const w=bitmap.width*scale,h=bitmap.height*scale;
+   ctx.drawImage(bitmap,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+   const whiteBlob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!whiteBlob)throw new Error('تعذر إنشاء ملف الصورة النهائي');
+   processedProductImageFile=new File([whiteBlob],'product-white-background.png',{type:'image/png'});
+   if(productPhotoPreviewUrl)URL.revokeObjectURL(productPhotoPreviewUrl);
+   productPhotoPreviewUrl=URL.createObjectURL(whiteBlob);
+   productPhotoPreview.src=productPhotoPreviewUrl;
+   productPhotoStatus.textContent='✓ أصبحت الخلفية بيضاء. ستُرفع هذه النسخة عند حفظ المنتج.';
+   document.getElementById('imageStatus').textContent='تم تجهيز صورة المنتج بخلفية بيضاء تلقائياً.';
+  }catch(error){
+   console.error('Product background removal failed:',error);
+   productPhotoStatus.textContent='تعذرت إزالة الخلفية. يمكنك إعادة اختيار الصورة أو متابعة الحفظ بالصورة الأصلية.';
+   document.getElementById('imageStatus').textContent='لم تكتمل إزالة الخلفية؛ سيتم استخدام الصورة الأصلية إذا حفظت المنتج.';
+  }finally{
+   productImageProcessing=false;
+   document.getElementById('addProductSubmitBtn').disabled=false;
+  }
+ })();
+ await productImageProcessingPromise;
+}
+productImageInput.addEventListener('change',()=>{
+ const file=productImageInput.files?.[0];
+ if(file)productImageProcessingPromise=processSelectedProductPhoto(file);
+});
+
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
+ if(productImageProcessing)await productImageProcessingPromise;
  e.preventDefault();
- const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
+ const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=processedProductImageFile||document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
  let units=chosenUnits.slice();
  // Accept the unit currently selected in the dropdown even if the separate
  // "إضافة الوحدة" button was not pressed.
@@ -467,7 +540,7 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
   if(image_url&&!manualImage){const uploadedPath=image_url.split('/product-images/').pop();if(uploadedPath)await activeClient.storage.from('product-images').remove([uploadedPath]);}
   alert('تعذر حفظ وحدات المنتج، لذلك ألغينا إنشاء المنتج حتى لا يظهر ناقصاً: '+unitError.message);return;
  }
- e.target.reset();chosenUnits=[];renderChosenUnits();syncUnitCategory();clearAiImagePreview();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال أو توليدها بالذكاء الاصطناعي.';await loadData();
+ e.target.reset();processedProductImageFile=null;if(productPhotoPreviewUrl){URL.revokeObjectURL(productPhotoPreviewUrl);productPhotoPreviewUrl=null;}productPhotoPreviewWrap.style.display='none';chosenUnits=[];renderChosenUnits();syncUnitCategory();clearAiImagePreview();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال أو توليدها بالذكاء الاصطناعي.';await loadData();
 });
 document.getElementById('headerImageFile').addEventListener('change',e=>{
  const file=e.target.files[0],status=document.getElementById('headerImageStatus');
