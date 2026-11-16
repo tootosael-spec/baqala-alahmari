@@ -21,7 +21,7 @@
     .header-inner{max-width:1180px;margin:auto;padding:20px 20px 34px}
     .nav-line{display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px}
-    .brand-mark{width:50px;height:50px;border-radius:17px;background:#ffffff1c;border:1px solid #ffffff2b;display:grid;place-items:center;font-size:27px}
+    .brand-mark{width:76px;height:48px;flex:0 0 76px;border-radius:3px;background:#075c43;border:0;display:grid;place-items:center;padding:5px}.brand-mark svg{width:100%;height:100%;display:block}
     .brand h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.4px}
     .brand p{font-size:12px;color:#c9dfd1;margin:2px 0 0}
     .admin-trigger{border:1px solid #ffffff45;background:#ffffff12;color:white;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:600}
@@ -94,7 +94,7 @@
     .muted{font-size:11px;color:#89948d}
     @media(min-width:620px){.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product-card{padding:13px}.product-art{height:145px;font-size:62px}.product-name{font-size:15px}}
     @media(min-width:900px){.products{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.header-inner{padding-bottom:42px}.hero{padding-top:42px}.product-art{height:155px}}
-    @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.brand-mark{width:44px;height:44px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
+    @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.brand-mark{width:68px;height:43px;flex-basis:68px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
   </style>
 </head>
 <body>
@@ -102,7 +102,7 @@
     <div class="header-inner">
       <div class="nav-line">
         <div class="brand">
-          <div class="brand-mark">🛒</div>
+          <div class="brand-mark" role="img" aria-label="الشعار الموحد للبقالات"><svg viewBox="0 0 100 64" aria-hidden="true"><path d="M17 13h9l8 31h42l11-24H31" fill="none" stroke="#f4d43b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M38 44l-4 8h43" fill="none" stroke="#f4d43b" stroke-width="5" stroke-linecap="round"/><circle cx="42" cy="56" r="4.5" fill="#f4d43b"/><circle cx="72" cy="56" r="4.5" fill="#f4d43b"/></svg></div>
           <div><h1 id="storeTitle">بقالة الأحمري</h1><p>كل احتياجات البيت في مكان واحد</p></div>
         </div>
       </div>
