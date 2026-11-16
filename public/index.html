@@ -255,7 +255,7 @@ async function storeApi(table,params={},options={}){
   return data;
  }finally{clearTimeout(timeout);}
 }
-let products=[],categories=[],settings={},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
+let products=[],categories=[],settings={name:'بقالة الأحمري',phone:'',deliveryFee:0,freeDeliveryThreshold:30,headerImageUrl:''},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
 let favorites=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_favorites')||'[]');return new Set(Array.isArray(saved)?saved.filter(x=>typeof x==='string'):[]);}catch(error){console.warn('Saved favorites were unreadable:',error);return new Set();}})(),showFavorites=false;
 function currentOffer(p){const o=p?.offer;if(!o||o.is_active!==true)return null;const now=Date.now();return Date.parse(o.starts_at)<=now&&Date.parse(o.ends_at)>now?o:null;}
 function unitPrice(p,u){const offer=currentOffer(p);return offer?Math.round(Number(u.price)*(1-Number(offer.discount_percent)/100)*100)/100:Number(u.price);}
