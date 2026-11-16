@@ -51,6 +51,23 @@ img,svg,video,iframe{max-width:100%}input,select,textarea,button{max-width:100%;
 <div class="hint">المنتجات والإعدادات محفوظة الآن في قاعدة بيانات Supabase المشتركة. الدخول محمي بحساب صاحب المتجر وسياسات RLS. رفع الصور متاح عبر رابط مباشر حالياً، وتوليد الصور بالذكاء الاصطناعي يحتاج ربط خدمة مستقلة.</div>
 </section>
 </div>
+<section id="offersCard" class="card" style="display:none;margin-top:18px">
+ <h3>عروض اليوم 🏷️</h3>
+ <p class="item-meta">اختر المنتج وحدد نسبة الخصم وتاريخ بداية العرض ونهايته. يظهر السعر المخفّض تلقائياً للزبائن على جميع وحدات المنتج.</p>
+ <form id="offerForm">
+  <label class="field"><span>المنتج</span><select id="offerProduct" required></select></label>
+  <div class="row">
+   <label class="field"><span>نسبة الخصم (%)</span><input id="offerPercent" type="number" min="1" max="90" step="0.5" required placeholder="مثلاً 15"></label>
+  </div>
+  <div class="row">
+   <label class="field"><span>بداية العرض</span><input id="offerStart" type="date" required></label>
+   <label class="field"><span>نهاية العرض</span><input id="offerEnd" type="date" required></label>
+  </div>
+  <input id="offerEditingProduct" type="hidden">
+  <div class="row"><button class="btn primary" type="submit" id="saveOfferButton">حفظ العرض</button><button class="btn light" type="button" id="cancelOfferEdit">إلغاء التعديل</button></div>
+ </form>
+ <div class="divider-label">العروض المسجلة</div><div id="offerList" class="item-meta">لا توجد عروض حتى الآن.</div>
+</section>
 <section id="managerManagement" class="card products" style="display:none"><h3>إدارة مديري الأقسام</h3><p class="item-meta">أضف مديراً وحدد له قسماً أو أكثر. سيحصل على كود دخول خاص، ويمكنك تعديل أقسامه أو إيقافه أو إصدار كود جديد.</p><form id="managerForm"><label class="field"><span>اسم مدير القسم</span><input id="managerName" maxlength="80" required placeholder="اسم المدير"></label><div class="field"><span>الأقسام المسندة إليه</span><div id="managerCategoryChecks" class="item-meta">حمّل الأقسام أولاً.</div></div><div class="row"><button id="saveManagerButton" class="btn primary" type="submit">＋ إضافة مدير</button><button id="cancelManagerEdit" class="btn light" type="button" style="display:none">إلغاء التعديل</button></div></form><div id="managerList" style="margin-top:14px"></div></section><section id="categoryManagement" class="card products"><h3>إدارة الأقسام</h3><p class="item-meta">أضف الأقسام أو عدّل أسماءها أو احذفها من هنا. حذف القسم لا يحذف المنتجات المرتبطة به.</p><form id="addCategoryForm" class="row" style="align-items:end"><label class="field"><span>اسم القسم الجديد</span><input id="newCategoryName" maxlength="60" placeholder="مثال: التموينات" required></label><button class="btn primary" type="submit" style="margin-bottom:11px">＋ إضافة قسم</button></form><div id="categoryList"></div></section>
 <section class="card products"><h3>منتجات المتجر</h3><div id="productList"></div></section>
 </main>
@@ -95,7 +112,7 @@ const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY,{
  }
 });
 
-let products=[],categories=[],settings={},managers=[];
+let products=[],categories=[],settings={},managers=[],offers=[];
 let currentRole='',editingManagerId=null;
 const money=n=>Number(n).toFixed(2)+' ر.س';
 function autoProductEmoji(name,categoryName){
@@ -214,6 +231,13 @@ async function loadData(){
  (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
  const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
  products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[]}));
+ offers=[];
+ if(!managerMode){
+  const offerResult=await supabase.from('store_product_offers').select('product_id,discount_percent,starts_at,ends_at,is_active,updated_at').order('ends_at',{ascending:false});
+  if(offerResult.error)throw offerResult.error;
+  offers=offerResult.data||[];
+  renderOfferManagement();
+ }
  document.getElementById('statProducts').textContent=products.length;
  document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+'</div></div></div><div class="actions"><button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
@@ -256,6 +280,7 @@ async function enterAdmin(session){
   document.getElementById('settingsCard').style.display=owner?'block':'none';
   document.getElementById('categoryManagement').style.display=owner?'block':'none';
   document.getElementById('managerManagement').style.display=owner?'block':'none';
+  document.getElementById('offersCard').style.display=owner?'block':'none';
   document.querySelector('.stats').style.display=owner?'grid':'none';
   document.querySelector('.welcome h2').textContent=owner?'مرحباً بك في لوحة تحكم المالك':'لوحة مدير القسم';
   document.querySelector('.welcome p').textContent=owner?'تابع منتجات متجرك وحدّث بياناته بسهولة.':'يمكنك إدارة المنتجات التابعة للأقسام المسندة إليك فقط.';
@@ -318,6 +343,26 @@ function refreshSuggestedEmoji(){
 document.getElementById('pName').addEventListener('input',refreshSuggestedEmoji);
 document.getElementById('pCategory').addEventListener('change',refreshSuggestedEmoji);
 await restoreAdminSession();
+function riyadhDateInput(date){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(date);}
+function resetOfferForm(){document.getElementById('offerForm').reset();document.getElementById('offerEditingProduct').value='';document.getElementById('saveOfferButton').textContent='حفظ العرض';const today=riyadhDateInput(new Date());document.getElementById('offerStart').value=today;document.getElementById('offerEnd').value=today;}
+function renderOfferManagement(){
+ const select=document.getElementById('offerProduct');
+ select.innerHTML=products.map(p=>'<option value="'+p.id+'">'+esc(p.name)+(p.is_active?'':' (مخفي)')+'</option>').join('');
+ const list=document.getElementById('offerList');
+ list.innerHTML=offers.length?offers.map(o=>{const p=products.find(x=>x.id===o.product_id);const start=new Date(o.starts_at).toLocaleDateString('ar-SA',{timeZone:'Asia/Riyadh'});const end=new Date(o.ends_at).toLocaleDateString('ar-SA',{timeZone:'Asia/Riyadh'});const active=o.is_active&&new Date(o.ends_at)>new Date();return '<div class="item"><div><b>'+esc(p?.name||'منتج محذوف')+'</b><div class="item-meta">خصم '+Number(o.discount_percent)+'٪ · من '+start+' إلى '+end+' · '+(active?'مفعّل':'متوقف / منتهي')+'</div></div><div class="actions"><button class="btn light" data-offer-edit="'+o.product_id+'">تعديل</button><button class="btn light" data-offer-toggle="'+o.product_id+'">'+(o.is_active?'إيقاف':'تفعيل')+'</button><button class="btn danger" data-offer-delete="'+o.product_id+'">حذف</button></div></div>';}).join(''):'<p class="item-meta">لا توجد عروض حتى الآن.</p>';
+ list.querySelectorAll('[data-offer-edit]').forEach(b=>b.addEventListener('click',()=>{const o=offers.find(x=>x.product_id===b.dataset.offerEdit);if(!o)return;document.getElementById('offerProduct').value=o.product_id;document.getElementById('offerEditingProduct').value=o.product_id;document.getElementById('offerPercent').value=o.discount_percent;document.getElementById('offerStart').value=riyadhDateInput(new Date(o.starts_at));document.getElementById('offerEnd').value=riyadhDateInput(new Date(o.ends_at));document.getElementById('saveOfferButton').textContent='حفظ التعديلات';document.getElementById('offersCard').scrollIntoView({behavior:'smooth',block:'start'});}));
+ list.querySelectorAll('[data-offer-toggle]').forEach(b=>b.addEventListener('click',async()=>{const o=offers.find(x=>x.product_id===b.dataset.offerToggle);if(!o)return;const {error}=await supabase.from('store_product_offers').update({is_active:!o.is_active,updated_at:new Date().toISOString()}).eq('product_id',o.product_id);if(error){alert('تعذر تحديث العرض: '+error.message);return;}await loadData();}));
+ list.querySelectorAll('[data-offer-delete]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('هل تريد حذف هذا العرض؟'))return;const {error}=await supabase.from('store_product_offers').delete().eq('product_id',b.dataset.offerDelete);if(error){alert('تعذر حذف العرض: '+error.message);return;}await loadData();}));
+}
+resetOfferForm();
+document.getElementById('offerForm').addEventListener('submit',async e=>{
+ e.preventDefault();const product_id=document.getElementById('offerProduct').value,discount_percent=Number(document.getElementById('offerPercent').value),start=document.getElementById('offerStart').value,end=document.getElementById('offerEnd').value;
+ if(!product_id||!Number.isFinite(discount_percent)||discount_percent<=0||discount_percent>90||!start||!end||end<start){alert('تحقق من المنتج ونسبة الخصم وتواريخ العرض.');return;}
+ const starts_at=new Date(start+'T00:00:00+03:00').toISOString(),ends_at=new Date(end+'T23:59:59.999+03:00').toISOString();
+ const {error}=await supabase.from('store_product_offers').upsert({product_id,discount_percent,starts_at,ends_at,is_active:true,updated_at:new Date().toISOString()},{onConflict:'product_id'});
+ if(error){alert('تعذر حفظ العرض: '+error.message);return;}resetOfferForm();await loadData();alert('تم حفظ العرض بنجاح.');
+});
+document.getElementById('cancelOfferEdit').addEventListener('click',resetOfferForm);
 document.getElementById('logoutButton').addEventListener('click',async()=>{
  const button=document.getElementById('logoutButton');button.disabled=true;
  try{const {error}=await supabase.auth.signOut();if(error)showMessage('تعذر تسجيل الخروج: '+error.message);}
