@@ -48,7 +48,7 @@
   s.onerror=onFallback;document.head.appendChild(s);
  }
  timer=setTimeout(fail,10000);
- function start(createClient){
+ async function start(createClient){
   try{
   const URL='https://mjykxdxtjntozlnwikim.supabase.co',KEY='sb_publishable_NA6qr3GDRJkVNniiGAKulw_uGmFPw35',OWNER='daad50b9-b0bc-49ca-8ad0-4cfa7570a44b';
   const sb=createClient(URL,KEY,{auth:{storage:localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'},global:{fetch:(input,init={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);return fetch(input,{...init,signal:controller.signal}).finally(()=>clearTimeout(timer));}}});
