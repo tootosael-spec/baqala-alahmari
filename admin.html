@@ -258,7 +258,6 @@ async function enterAdmin(session,authClient=supabase){
  if(role==='department_manager'&&authClient!==managerSupabase)throw new Error('مسار دخول مدير القسم غير صحيح');
  localStorage.setItem('baqala_active_admin_role',role||'');
 
- const user=session?.user;if(!user)return;
  if(enteringAdmin||activeAdminUserId===user.id)return;
  enteringAdmin=true;
  try{
