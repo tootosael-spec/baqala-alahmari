@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "بقالة الأحمري",
+  "short_name": "الأحمري",
+  "description": "تسوق احتياجاتك اليومية من بقالة الأحمري بسهولة.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#f5f7f4",
+  "theme_color": "#123d2b",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "لوحة الإدارة", "short_name": "الإدارة", "url": "/admin.html", "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }
+  ]
+}
