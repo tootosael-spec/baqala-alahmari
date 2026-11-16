@@ -102,6 +102,14 @@
     .send-btn{width:100%;height:49px;background:#159b58;color:white;border:0;border-radius:14px;font-weight:700}
     .send-btn:hover{background:#10834a}
     .muted{font-size:11px;color:#89948d}
+    .customer-help-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto 28px}
+    .customer-help-actions button{border:1px solid #dce8de;background:#fff;color:#176b40;border-radius:13px;padding:12px 16px;font-weight:700;font-size:13px}
+    .customer-help-modal{display:none;position:fixed;inset:0;z-index:25;background:#101b15a8;padding:16px;overflow:auto}
+    .customer-help-modal .panel{margin:25px auto}
+    .customer-help-modal textarea,.customer-help-modal input{width:100%;border:1px solid #dce5dc;border-radius:12px;padding:12px;font:inherit;background:#fff}
+    .customer-help-modal textarea{min-height:105px;resize:vertical}
+    .customer-help-submit{width:100%;height:48px;border:0;border-radius:13px;background:#123d2b;color:#fff;font-weight:700}
+
     @media(min-width:620px){.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product-card{padding:13px}.product-art{height:145px;font-size:62px}.product-name{font-size:15px}}
     @media(min-width:900px){.products{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.header-inner{padding-bottom:42px}.hero{padding-top:42px}.product-art{height:155px}}
     @media(max-width:420px){.header-inner{padding:16px 15px 27px}.page-wrap{padding:0 15px}.brand h1{font-size:17px}.admin-trigger{padding:9px 10px;font-size:11px}.hero h2{font-size:27px}.product-card{padding:9px;border-radius:17px}.product-art{height:95px;font-size:45px}.add-btn{padding:8px 9px}.cart-open{padding:12px 13px;font-size:12px}}
@@ -199,6 +207,10 @@ input,select,textarea{max-width:100%;min-width:0}
     </div>
   </main>
 
+    <div class="customer-help-actions" aria-label="خدمات العملاء">
+      <button type="button" onclick="openCustomerHelp('product')">＋ طلب منتج غير موجود</button>
+      <button type="button" onclick="openCustomerHelp('complaint')">✉ رفع شكوى</button>
+    </div>
   <div class="cart-dock">
     <div class="cart-dock-inner">
       <div class="cart-info"><small id="cartCount">0 منتجات في السلة</small><strong id="cartTotal">0.00 ر.س</strong></div>
@@ -230,6 +242,31 @@ input,select,textarea{max-width:100%;min-width:0}
       <button id="confirmOrderButton" class="send-btn" type="button" onclick="confirmCurrentOrder()">تأكيد طلبي ✓</button>
       <button type="button" class="action-btn soft-btn" style="width:100%;margin-top:9px" onclick="closeOrderConfirm()">لاحقاً</button>
       <p id="orderConfirmMessage" class="muted" role="status" style="margin:12px 0 0"></p>
+    </div>
+  </div>
+
+  <div id="productRequestModal" class="customer-help-modal" role="dialog" aria-modal="true" aria-labelledby="productRequestTitle" onclick="if(event.target===this)closeCustomerHelp('product')">
+    <div class="panel">
+      <div class="panel-head"><h2 id="productRequestTitle">طلب منتج غير موجود</h2><button class="close-btn" type="button" onclick="closeCustomerHelp('product')">✕</button></div>
+      <form id="productRequestForm">
+        <label class="field"><span>اسم المنتج المطلوب</span><input id="requestedProductName" maxlength="120" required placeholder="اكتب اسم المنتج"></label>
+        <label class="field"><span>تفاصيل إضافية (اختياري)</span><textarea id="requestedProductDetails" maxlength="1500" placeholder="النوع أو الحجم أو أي تفاصيل تساعدنا"></textarea></label>
+        <label class="field"><span>رقم للتواصل (اختياري)</span><input id="requestedProductPhone" type="tel" maxlength="30" placeholder="05xxxxxxxx"></label>
+        <button class="customer-help-submit" type="submit">إرسال طلب المنتج</button>
+        <p id="productRequestStatus" class="muted" role="status"></p>
+      </form>
+    </div>
+  </div>
+  <div id="complaintModal" class="customer-help-modal" role="dialog" aria-modal="true" aria-labelledby="complaintTitle" onclick="if(event.target===this)closeCustomerHelp('complaint')">
+    <div class="panel">
+      <div class="panel-head"><h2 id="complaintTitle">رفع شكوى</h2><button class="close-btn" type="button" onclick="closeCustomerHelp('complaint')">✕</button></div>
+      <form id="complaintForm">
+        <label class="field"><span>موضوع الشكوى</span><input id="complaintSubject" maxlength="120" required placeholder="مثال: تأخر الطلب"></label>
+        <label class="field"><span>تفاصيل الشكوى</span><textarea id="complaintDetails" maxlength="1500" required placeholder="اكتب تفاصيل الشكوى هنا"></textarea></label>
+        <label class="field"><span>رقم للتواصل (اختياري)</span><input id="complaintPhone" type="tel" maxlength="30" placeholder="05xxxxxxxx"></label>
+        <button class="customer-help-submit" type="submit">إرسال الشكوى</button>
+        <p id="complaintStatus" class="muted" role="status"></p>
+      </form>
     </div>
   </div>
 
@@ -452,6 +489,44 @@ window.sendOrder=async function(){
 };
 document.getElementById('search').addEventListener('input',renderProducts);
 document.getElementById('favoritesToggle').addEventListener('click',()=>{showFavorites=!showFavorites;renderProducts();});
+
+window.openCustomerHelp=function(type){
+ const id=type==='product'?'productRequestModal':'complaintModal';
+ const modal=document.getElementById(id);if(modal)modal.style.display='block';
+};
+window.closeCustomerHelp=function(type){
+ const id=type==='product'?'productRequestModal':'complaintModal';
+ const modal=document.getElementById(id);if(modal)modal.style.display='none';
+};
+document.getElementById('productRequestForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const button=e.currentTarget.querySelector('button[type="submit"]'),status=document.getElementById('productRequestStatus');
+ const product_name=document.getElementById('requestedProductName').value.trim();
+ const details=document.getElementById('requestedProductDetails').value.trim()||'لا توجد تفاصيل إضافية';
+ const contact_phone=document.getElementById('requestedProductPhone').value.trim()||null;
+ if(product_name.length<2||details.length<3){status.textContent='أكمل اسم المنتج بشكل صحيح.';return;}
+ button.disabled=true;button.textContent='جارٍ الإرسال...';status.textContent='';
+ try{
+  await storeApi('store_customer_messages',{}, {method:'POST',body:{message_type:'product_request',product_name,details,contact_phone}});
+  e.currentTarget.reset();status.textContent='وصل طلبك لصاحب البقالة، شكرًا لك 🌿';
+ }catch(error){status.textContent='تعذر إرسال الطلب. حاول مرة أخرى.';console.error(error);}
+ finally{button.disabled=false;button.textContent='إرسال طلب المنتج';}
+});
+document.getElementById('complaintForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const button=e.currentTarget.querySelector('button[type="submit"]'),status=document.getElementById('complaintStatus');
+ const subject=document.getElementById('complaintSubject').value.trim();
+ const details=document.getElementById('complaintDetails').value.trim();
+ const contact_phone=document.getElementById('complaintPhone').value.trim()||null;
+ if(subject.length<2||details.length<3){status.textContent='أدخل موضوع الشكوى وتفاصيلها.';return;}
+ button.disabled=true;button.textContent='جارٍ الإرسال...';status.textContent='';
+ try{
+  await storeApi('store_customer_messages',{}, {method:'POST',body:{message_type:'complaint',subject,details,contact_phone}});
+  e.currentTarget.reset();status.textContent='تم استلام شكواك، شكرًا لإبلاغنا.';
+ }catch(error){status.textContent='تعذر إرسال الشكوى. حاول مرة أخرى.';console.error(error);}
+ finally{button.disabled=false;button.textContent='إرسال الشكوى';}
+});
+
 await loadStore();
 window.__BAQALA_STORE_READY__=true;
 updateReorderButton();
