@@ -118,8 +118,8 @@ async function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const name=prompt('اسم المنتج',p.name);if(name===null)return;
  const initial=(p.units||[]).map(u=>u.name+' | '+u.price).join('\n')||((p.unit||'حبة')+' | '+p.price);
- const unitsText=prompt('وحدات البيع والأسعار، كل وحدة في سطر بصيغة: الوحدة | السعر',initial);if(unitsText===null)return;
- const units=parseUnits(unitsText);if(!name.trim()||!units.length){alert('تأكد من إدخال وحدة واحدة على الأقل بصيغة: حبة | 1');return;}
+ const unitsText=prompt(/خضار/.test(p.category?.name||'')?'أدخل سعر الكيلو فقط بهذا الشكل: كيلو | 8. سيتم حساب نص كيلو وربع كيلو تلقائياً.':'وحدات البيع والأسعار، كل وحدة في سطر بصيغة: الوحدة | السعر',initial);if(unitsText===null)return;
+ const units=prepareUnits(unitsText,p.category_id);if(!name.trim()||!units.length){alert('تأكد من إدخال وحدة واحدة على الأقل بصيغة: حبة | 1');return;}
  const {error}=await supabase.from('store_products').update({name:name.trim(),price:units[0].price,unit:units[0].name,updated_at:new Date().toISOString()}).eq('id',id);
  if(error){alert('تعذر تعديل المنتج: '+error.message);return;}
  const {error:deleteError}=await supabase.from('store_product_units').delete().eq('product_id',id);
