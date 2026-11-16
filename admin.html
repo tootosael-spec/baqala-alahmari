@@ -218,10 +218,11 @@ async function loadData(){
  const offersByProduct=new Map((o.data||[]).map(x=>[x.product_id,x]));
  products=(p.data||[]).map(x=>({...x,category:{name:categoryNames.get(x.category_id)||'بدون قسم'},units:unitsByProduct.get(x.id)||[],offer:offersByProduct.get(x.id)||null}));
  document.getElementById('statProducts').textContent=products.length;
- document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+(x.offer?' · عرض '+Number(x.offer.discount_percent)+'٪':'')+'</div></div></div><div class="actions">'+(!x.offer?'<button class="btn light" data-offer="'+x.id+'">إضافة عرض</button>':(x.offer.created_by===activeAdminUserId?'<button class="btn light" data-offer="'+x.id+'">'+(x.offer.is_active?'تعديل / إيقاف العرض':'تعديل العرض')+'</button>':'<span class="item-meta">العرض أنشأه مسؤول آخر ولا تملك صلاحية تغييره</span>'))+'<button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
+ document.getElementById('productList').innerHTML=products.length?products.map(x=>'<div class="item"><div class="item-main"><div class="thumb">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="">':esc(x.emoji||'🛍️'))+'</div><div><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.category.name)+' · '+(x.units||[]).map(v=>esc(v.name)+' '+money(v.price)).join('، ')+' · '+(x.is_active?'ظاهر في المتجر':'مخفي عن الزبائن')+(x.offer?' · عرض '+Number(x.offer.discount_percent)+'٪':'')+'</div></div></div><div class="actions">'+(!x.offer?'<button class="btn light" data-offer="'+x.id+'">إضافة عرض</button>':(x.offer.created_by===activeAdminUserId?'<button class="btn light" data-offer="'+x.id+'">'+(x.offer.is_active?'تعديل / إيقاف العرض':'تعديل العرض')+'</button>':'<span class="item-meta">العرض أنشأه مسؤول آخر ولا تملك صلاحية تغييره</span>'))+'<button class="btn light" data-toggle="'+x.id+'">'+(x.is_active?'إخفاء':'إظهار')+'</button><button class="btn light" data-edit-image="'+x.id+'">تعديل صورة المنتج</button><button class="btn light" data-edit="'+x.id+'">تعديل</button><button class="btn danger" data-delete="'+x.id+'">حذف</button></div></div>').join(''):'<p class="item-meta">لا توجد منتجات في الأقسام المسندة حالياً.</p>';
  document.querySelectorAll('[data-offer]').forEach(b=>b.addEventListener('click',()=>manageProductOffer(b.dataset.offer)));
  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggleProduct(b.dataset.toggle)));
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
+ document.querySelectorAll('[data-edit-image]').forEach(b=>b.addEventListener('click',()=>changeProductImage(b.dataset.editImage)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
  if(!managerMode){
   const [s,ordersTotal,ordersToday]=await Promise.all([
@@ -500,7 +501,28 @@ document.getElementById('settingsForm').addEventListener('submit',async e=>{
  status.textContent=header_image_url?'تم حفظ صورة الخلفية بنجاح.':'تمت إزالة صورة الخلفية.';
  await loadData();
 });
-async function editProduct(id){
+async async function changeProductImage(id){
+ const p=products.find(x=>x.id===id);if(!p)return;
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.style.display='none';document.body.appendChild(input);
+ input.addEventListener('change',async()=>{
+  const file=input.files?.[0];if(!file){input.remove();return;}
+  if(!file.type.startsWith('image/')||file.size>5*1024*1024){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');input.remove();return;}
+  const button=document.querySelector('[data-edit-image="'+id+'"]');if(button){button.disabled=true;button.textContent='جارٍ رفع الصورة...';}
+  try{
+   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+   const path='products/'+p.category_id+'/'+crypto.randomUUID()+'.'+ext;
+   const {error:uploadError}=await activeClient.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
+   if(uploadError)throw uploadError;
+   const image_url=activeClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+   const {error:updateError}=await activeClient.from('store_products').update({image_url,updated_at:new Date().toISOString()}).eq('id',id);
+   if(updateError)throw updateError;
+   await loadData();alert('تم تحديث صورة المنتج بنجاح.');
+  }catch(error){alert('تعذر تحديث الصورة: '+(error?.message||error));if(button){button.disabled=false;button.textContent='تعديل صورة المنتج';}}
+  finally{input.remove();}
+ });
+ input.click();
+}
+function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
  const name=prompt('اسم المنتج',p.name);if(name===null)return;
  const veg=/خضار/.test(p.category?.name||'');
