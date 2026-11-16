@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#174b36"><title>إدارة اشتراكات البقالات</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#1d2a23;background:#f4f7f4}*{box-sizing:border-box}body{margin:0}header{background:#174b36;color:#fff;padding:22px 16px}header .wrap,main{max-width:1050px;margin:auto}h1{font-size:22px;margin:0 0 6px}header p{margin:0;color:#dcebe1;font-size:13px}.wrap{padding-left:14px;padding-right:14px}main{padding:18px 14px 50px}.card{background:#fff;border:1px solid #e1e9e2;border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:0 3px 14px #173d2510}.hidden{display:none!important}.muted{color:#6b786f;font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{background:#f3f7f3;border-radius:12px;padding:12px}.stat b{display:block;font-size:23px;color:#174b36}.stat span{font-size:12px;color:#66736a}label{display:block;font-size:13px;margin:10px 0 5px}input,button{font:inherit}input{width:100%;padding:12px;border:1px solid #d5ded6;border-radius:9px;background:#fff}button{border:0;border-radius:9px;padding:11px 15px;background:#17613f;color:#fff;font-weight:700;cursor:pointer}button.secondary{background:#eaf2ec;color:#174b36}button.danger{background:#a33b32}button:disabled{opacity:.5;cursor:wait}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.store{border:1px solid #e3eae4;border-radius:12px;padding:13px;margin-top:9px}.store h3{margin:0 0 6px;font-size:16px}.tag{display:inline-block;background:#eef5ef;color:#20543a;border-radius:20px;padding:4px 9px;font-size:11px;margin:3px 0}.receipt{border-top:1px solid #edf1ed;padding:12px 0}.receipt:first-child{border:0}.receipt a{color:#17613f}.msg{padding:10px;border-radius:9px;background:#fff5dd;color:#76531b;font-size:13px;margin:10px 0}.ok{background:#e9f7ed;color:#1b6337}.bad{background:#fff0ef;color:#8b2e29}.section-title{margin:0 0 10px;font-size:17px}@media(max-width:520px){.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>لوحة مدير المنصة</h1><p>إدارة البقالات والاشتراكات ومراجعة إيصالات التحويل</p></div></header>
+<main>
+<section id="auth" class="card">
+<h2 class="section-title">دخول مدير المنصة</h2>
+<p class="muted">استخدم البريد المخصص لإدارة المنصة. إذا لم يكن لديك حساب مركزي، أنشئه أولاً بهذا البريد.</p>
+<form id="authForm">
+<label>البريد الإلكتروني</label><input id="email" type="email" required autocomplete="username" value="baqalaalahmari@gmail.com">
+<label>كلمة المرور</label><input id="password" type="password" required minlength="8" autocomplete="current-password">
+<div class="row" style="margin-top:13px"><button type="submit" id="loginBtn">دخول</button><button type="button" class="secondary" id="signupBtn">إنشاء حساب المدير</button></div>
+</form><div id="authMsg" class="msg hidden"></div>
+</section>
+<section id="dashboard" class="hidden">
+<div class="card row" style="justify-content:space-between"><div><b>مرحباً بك في إدارة المنصة</b><div class="muted" id="adminEmail"></div></div><button class="secondary" id="logoutBtn">تسجيل الخروج</button></div>
+<div class="card"><div class="stats"><div class="stat"><b id="storeCount">0</b><span>عدد البقالات</span></div><div class="stat"><b id="activeCount">0</b><span>اشتراكات نشطة</span></div><div class="stat"><b id="pendingCount">0</b><span>إيصالات بانتظار المراجعة</span></div></div></div>
+<div class="card"><h2 class="section-title">إضافة بقالة</h2><form id="storeForm" class="grid">
+<div><label>اسم البقالة</label><input id="storeName" required placeholder="مثال: بقالة جديدة"></div>
+<div><label>الرابط المختصر (بالإنجليزية)</label><input id="storeSlug" required pattern="[a-z0-9-]+" placeholder="store-name"></div>
+<div><label>رابط المتجر</label><input id="storeUrl" type="url" placeholder="https://..."></div>
+<div><label>بريد صاحب البقالة</label><input id="ownerEmail" type="email" placeholder="owner@example.com"></div>
+<div style="align-self:end"><button type="submit">إضافة البقالة</button></div>
+</form><p class="muted">بعد إضافة البقالة، يفتح صاحبها صفحة الاشتراك وينشئ حساباً ببريده، ثم تربطه بالبقالة من القائمة أدناه.</p></div>
+<div class="card"><h2 class="section-title">البقالات المسجلة</h2><div id="storesList" class="muted">جارٍ التحميل...</div></div>
+<div class="card"><h2 class="section-title">إيصالات التحويل</h2><div id="receiptsList" class="muted">جارٍ التحميل...</div></div>
+</section>
+</main>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+const SUPABASE_URL='https://szntskhngiyxhhddcesx.supabase.co';
+const SUPABASE_KEY='sb_publishable_63rH2_Eun3uaibutZEMw1g_GP6K1kIc';
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function message(el,text,kind=''){el.textContent=text;el.className='msg '+kind}
+function addMonths(date,months){const d=new Date(date);const day=d.getDate();d.setMonth(d.getMonth()+months);if(d.getDate()<day)d.setDate(0);return d}
+async function ensureAdmin(){
+ const {data:{user}}=await sb.auth.getUser();
+ if(!user)return false;
+ if(user.app_metadata?.platform_role!=='admin'){
+   const {data,error}=await sb.functions.invoke('bootstrap-platform-admin',{body:{}});
+   if(error)throw error;
+   await sb.auth.refreshSession();
+ }
+ const {data:{user:fresh}}=await sb.auth.getUser();
+ if(fresh?.app_metadata?.platform_role!=='admin')throw new Error('لم يتم تفعيل صلاحية المدير. سجّل الخروج ثم الدخول بعد تأكيد البريد.');
+ $('adminEmail').textContent=fresh.email||'';
+ return true;
+}
+async function show(){
+ const {data:{session}}=await sb.auth.getSession();
+ if(!session){$('auth').classList.remove('hidden');$('dashboard').classList.add('hidden');return}
+ try{await ensureAdmin();$('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');await loadAll()}
+ catch(e){$('auth').classList.remove('hidden');$('dashboard').classList.add('hidden');message($('authMsg'),e.message||'تعذر التحقق من صلاحيات المدير','bad')}
+}
+async function loadAll(){
+ const [storesRes,receiptsRes]=await Promise.all([
+  sb.from('stores').select('id,slug,name,website_url,owner_email,operational_status,enforcement_enabled,subscriptions(status,amount,currency,ends_at)').order('created_at',{ascending:false}),
+  sb.from('payment_receipts').select('id,store_id,amount,currency,requested_months,status,receipt_path,created_at,stores(name,slug)').order('created_at',{ascending:false})
+ ]);
+ if(storesRes.error)throw storesRes.error;if(receiptsRes.error)throw receiptsRes.error;
+ const stores=storesRes.data||[], receipts=receiptsRes.data||[];
+ $('storeCount').textContent=stores.length;
+ $('activeCount').textContent=stores.filter(s=>s.subscriptions?.[0]?.status==='active').length;
+ $('pendingCount').textContent=receipts.filter(r=>r.status==='pending').length;
+ $('storesList').innerHTML=stores.length?stores.map(s=>{
+  const sub=s.subscriptions?.[0]||{};
+  return '<div class="store"><h3>'+esc(s.name)+'</h3><div class="muted">'+esc(s.slug)+' · '+esc(s.owner_email||'لم يحدد بريد المالك')+'</div><div><span class="tag">الاشتراك: '+esc(sub.status||'غير مسجل')+'</span><span class="tag">'+esc(sub.amount??50)+' '+esc(sub.currency||'SAR')+' شهرياً</span><span class="tag">حالة المشروع: '+esc(s.operational_status)+'</span></div><div class="row" style="margin-top:8px"><input type="email" id="owner-'+s.id+'" placeholder="بريد صاحب البقالة المسجل"><button class="secondary" data-link="'+s.id+'">ربط حساب المالك</button></div><div class="muted" style="margin-top:6px">معرّف البقالة: '+esc(s.id)+'</div></div>'
+ }).join(''):'لا توجد بقالات مسجلة بعد.';
+ $('storesList').querySelectorAll('[data-link]').forEach(btn=>btn.addEventListener('click',async()=>{
+  const email=$('owner-'+btn.dataset.link).value.trim();if(!email){alert('اكتب بريد صاحب البقالة');return}
+  btn.disabled=true;
+  const {data,error}=await sb.functions.invoke('assign-store-owner',{body:{store_id:btn.dataset.link,email}});
+  btn.disabled=false;
+  if(error){alert(error.message||'تعذر ربط الحساب');return}
+  alert('تم ربط حساب '+email+' بالبقالة.');await loadAll();
+ }));
+ $('receiptsList').innerHTML=receipts.length?'':'لا توجد إيصالات حتى الآن.';
+ for(const r of receipts){
+  const {data:file}=await sb.storage.from('subscription-receipts').createSignedUrl(r.receipt_path,300);
+  const el=document.createElement('div');el.className='receipt';
+  el.innerHTML='<b>'+esc(r.stores?.name||'بقالة')+'</b> — '+esc(r.amount)+' '+esc(r.currency)+' — '+esc(r.requested_months)+' شهر <span class="tag">'+esc(r.status)+'</span><div class="muted">'+new Date(r.created_at).toLocaleString('ar-SA')+'</div>'+(file?.signedUrl?'<a target="_blank" rel="noopener" href="'+esc(file.signedUrl)+'">عرض الإيصال</a>':'<span class="muted">تعذر إنشاء رابط الإيصال</span>')+(r.status==='pending'?'<div class="row" style="margin-top:8px"><button data-approve="'+r.id+'">موافقة وتفعيل</button><button class="danger" data-reject="'+r.id+'">رفض</button></div>':'');
+  $('receiptsList').appendChild(el);
+ }
+ $('receiptsList').querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>review(b.dataset.approve,true,b)));
+ $('receiptsList').querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>review(b.dataset.reject,false,b)));
+}
+async function review(id,approve,btn){
+ btn.disabled=true;
+ const {data:{user}}=await sb.auth.getUser();
+ const {data:receipt,error:rerr}=await sb.from('payment_receipts').select('*').eq('id',id).single();
+ if(rerr){btn.disabled=false;alert(rerr.message);return}
+ const now=new Date();
+ const {data:sub,error:serr}=await sb.from('subscriptions').select('*').eq('store_id',receipt.store_id).single();
+ if(serr){btn.disabled=false;alert(serr.message);return}
+ let update={status:approve?'approved':'rejected',reviewed_by:user.id,reviewed_at:now.toISOString()};
+ const {error:uerr}=await sb.from('payment_receipts').update(update).eq('id',id);
+ if(uerr){btn.disabled=false;alert(uerr.message);return}
+ if(approve){
+  const base=sub.status==='active'&&sub.ends_at&&new Date(sub.ends_at)>now?new Date(sub.ends_at):now;
+  const start=sub.starts_at||now.toISOString();
+  const end=addMonths(base,receipt.requested_months);
+  const {error:e}=await sb.from('subscriptions').update({status:'active',starts_at:start,ends_at:end.toISOString(),updated_at:now.toISOString()}).eq('store_id',receipt.store_id);
+  if(e){alert('تم تحديث الإيصال لكن تعذر تحديث الاشتراك: '+e.message);return}
+ }
+ await sb.from('subscription_events').insert({store_id:receipt.store_id,actor_user_id:user.id,event_type:approve?'payment_approved':'payment_rejected',details:{receipt_id:id,months:receipt.requested_months,amount:receipt.amount}});
+ await loadAll();alert(approve?'تم اعتماد الإيصال وتمديد الاشتراك.':'تم رفض الإيصال.');
+}
+$('authForm').addEventListener('submit',async e=>{e.preventDefault();$('loginBtn').disabled=true;const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){message($('authMsg'),error.message,'bad');return}await show()});
+$('signupBtn').addEventListener('click',async()=>{if($('email').value.trim().toLowerCase()!=='baqalaalahmari@gmail.com'){message($('authMsg'),'إنشاء حساب مدير المنصة مخصص للبريد المعتمد فقط.','bad');return}const {data,error}=await sb.auth.signUp({email:$('email').value.trim(),password:$('password').value});if(error){message($('authMsg'),error.message,'bad');return}if(data.session){await show()}else{message($('authMsg'),'تم إنشاء الحساب. افتح رسالة التأكيد في بريدك ثم ارجع وسجّل الدخول.','ok')}});
+$('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();await show()});
+sb.auth.onAuthStateChange(()=>setTimeout(()=>show(),0));
+show();
+</script>
+</body></html>
