@@ -17,7 +17,7 @@
     body{margin:0;background:#f5f7f4;color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;padding-bottom:100px}
     button,input,select{font:inherit}
     button{cursor:pointer}
-    .site-header{--header-image:none;background-image:linear-gradient(120deg,rgba(10,43,29,.88),rgba(12,46,33,.78)),var(--header-image),radial-gradient(ellipse at 85% 5%,#2d8052 0,transparent 38%),linear-gradient(135deg,#123d2b,#0c2e21);background-position:center;background-size:cover;background-repeat:no-repeat;color:white;overflow:hidden}
+    .site-header{--header-image:none;background-image:linear-gradient(120deg,rgba(10,43,29,.38),rgba(12,46,33,.28)),var(--header-image),radial-gradient(ellipse at 85% 5%,#2d8052 0,transparent 38%),linear-gradient(135deg,#123d2b,#0c2e21);background-position:center;background-size:cover;background-repeat:no-repeat;color:white;overflow:hidden}
     .header-inner{max-width:1180px;margin:auto;padding:20px 20px 34px}
     .nav-line{display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px}
@@ -173,7 +173,9 @@ async function loadStore(){
  categories=c.data||[];
  products=(p.data||[]).map(x=>({...x,category:x.category?.name||'أخرى',imageUrl:x.image_url,emoji:x.emoji||'🛍️',price:Number(x.price),unit:x.unit||'حبة',units:(x.units||[]).filter(u=>u.is_active).sort((a,b)=>a.sort_order-b.sort_order).map(u=>({...u,price:Number(u.price)}))})).filter(x=>x.units.length);
  products.forEach(p=>{if(cart[p.id]){cart[p.id+'__'+p.units[0].id]=(cart[p.id+'__'+p.units[0].id]||0)+cart[p.id];delete cart[p.id];}});persistCart();
- settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30)};
+ settings={name:s.data?.store_name||'بقالة الأحمري',phone:s.data?.whatsapp_number||'',deliveryFee:Number(s.data?.delivery_fee||0),freeDeliveryThreshold:Number(s.data?.free_delivery_threshold??30),headerImageUrl:s.data?.header_image_url||''};
+ const headerEl=document.querySelector('.site-header');
+ headerEl.style.setProperty('--header-image',settings.headerImageUrl?'url('+JSON.stringify(settings.headerImageUrl)+')':'none');
  document.getElementById('storeTitle').textContent=settings.name;
  document.querySelector('.hero h2 span').textContent=settings.name;
  renderCats();renderProducts();renderCartSummary();
