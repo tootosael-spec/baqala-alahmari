@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v12-admin-logout-20261116';
+const CACHE_NAME='baqala-pwa-v13-instant-logout-20261116';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
