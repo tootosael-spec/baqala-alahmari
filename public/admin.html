@@ -23,6 +23,11 @@
 </section>
 <section class="card"><h3>إعدادات المتجر</h3><form id="settingsForm">
 <label class="field"><span>اسم المتجر</span><input id="storeName" placeholder="بقالة الأحمري"></label>
+<label class="field"><span>صورة خلفية الهيدر</span><input id="headerImageFile" type="file" accept="image/*" capture="environment"></label>
+<div id="headerImagePreviewWrap" style="display:none;margin:8px 0"><img id="headerImagePreview" alt="معاينة خلفية الهيدر" style="width:100%;max-height:170px;object-fit:cover;border-radius:12px"><p class="item-meta">الصورة الحالية للهيدر</p></div>
+<label class="field" style="display:flex;align-items:center;gap:8px"><input id="removeHeaderImage" type="checkbox" style="width:auto"> إزالة صورة الخلفية الحالية</label>
+<p id="headerImageStatus" class="item-meta">اختر صورة من جهازك لإضافتها خلفيةً للهيدر. الحد الأقصى 5 ميجابايت.</p>
+
 <label class="field"><span>رقم واتساب مع رمز الدولة</span><input id="storePhone" inputmode="tel" placeholder="9665xxxxxxxx"></label>
 <label class="field"><span>قيمة التوصيل (ريال)</span><input id="deliveryFee" type="number" min="0" step="0.25" placeholder="0"></label>
 <label class="field"><span>حد الطلب للتوصيل المجاني (ريال)</span><input id="freeDeliveryThreshold" type="number" min="0" step="0.25" placeholder="30"></label>
@@ -62,6 +67,8 @@ async function loadData(){
  document.getElementById('statCats').textContent=categories.length;
  document.getElementById('statWhatsapp').textContent=settings.whatsapp_number?'مضاف ✓':'غير مضاف';
  document.getElementById('storeName').value=settings.store_name||'بقالة الأحمري';
+ const headerPreview=document.getElementById('headerImagePreview'),headerWrap=document.getElementById('headerImagePreviewWrap');
+ if(settings.header_image_url){headerPreview.src=settings.header_image_url;headerWrap.style.display='block';}else{headerPreview.removeAttribute('src');headerWrap.style.display='none';}
  document.getElementById('storePhone').value=settings.whatsapp_number||'';
  document.getElementById('deliveryFee').value=Number(settings.delivery_fee||0);
  document.getElementById('freeDeliveryThreshold').value=Number(settings.free_delivery_threshold??30);
@@ -112,10 +119,36 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
  if(unitError){alert('تم إنشاء المنتج لكن تعذر حفظ وحداته: '+unitError.message);return;}
  e.target.reset();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال.';await loadData();
 });
+document.getElementById('headerImageFile').addEventListener('change',e=>{
+ const file=e.target.files[0],status=document.getElementById('headerImageStatus');
+ if(!file)return;
+ if(!file.type.startsWith('image/')||file.size>5*1024*1024){alert('اختر صورة لا يتجاوز حجمها 5 ميجابايت');e.target.value='';return;}
+ document.getElementById('headerImagePreview').src=URL.createObjectURL(file);
+ document.getElementById('headerImagePreviewWrap').style.display='block';
+ document.getElementById('removeHeaderImage').checked=false;
+ status.textContent='تم اختيار الصورة. اضغط حفظ الإعدادات لرفعها وتطبيقها.';
+});
 document.getElementById('settingsForm').addEventListener('submit',async e=>{
- e.preventDefault();const store_name=document.getElementById('storeName').value.trim()||'بقالة الأحمري',whatsapp_number=document.getElementById('storePhone').value.replace(/\D/g,'')||null,delivery_fee=Number(document.getElementById('deliveryFee').value),free_delivery_threshold=Number(document.getElementById('freeDeliveryThreshold').value); if(!Number.isFinite(delivery_fee)||delivery_fee<0||!Number.isFinite(free_delivery_threshold)||free_delivery_threshold<0){alert('أدخل قيمة التوصيل وحد التوصيل المجاني بشكل صحيح');return;}
- const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,updated_at:new Date().toISOString()}).eq('id',1);
- if(error){alert('تعذر حفظ الإعدادات: '+error.message);return;}alert('تم حفظ الإعدادات');await loadData();
+ e.preventDefault();
+ const store_name=document.getElementById('storeName').value.trim()||'بقالة الأحمري',whatsapp_number=document.getElementById('storePhone').value.replace(/\D/g,'')||null,delivery_fee=Number(document.getElementById('deliveryFee').value),free_delivery_threshold=Number(document.getElementById('freeDeliveryThreshold').value);
+ if(!Number.isFinite(delivery_fee)||delivery_fee<0||!Number.isFinite(free_delivery_threshold)||free_delivery_threshold<0){alert('أدخل قيمة التوصيل وحد التوصيل المجاني بشكل صحيح');return;}
+ const status=document.getElementById('headerImageStatus'),file=document.getElementById('headerImageFile').files[0],remove=document.getElementById('removeHeaderImage').checked;
+ let header_image_url=settings.header_image_url||null;
+ if(file){
+  status.textContent='جارٍ رفع صورة الخلفية...';
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path='header/'+crypto.randomUUID()+'.'+ext;
+  const {error:uploadError}=await supabase.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع صورة الخلفية: '+uploadError.message);return;}
+  header_image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+ }else if(remove){header_image_url=null;}
+ const {error}=await supabase.from('store_settings').update({store_name,whatsapp_number,delivery_fee,free_delivery_threshold,header_image_url,updated_at:new Date().toISOString()}).eq('id',1);
+ if(error){alert('تعذر حفظ الإعدادات: '+error.message);return;}
+ alert('تم حفظ الإعدادات');
+ document.getElementById('headerImageFile').value='';
+ document.getElementById('removeHeaderImage').checked=false;
+ status.textContent=header_image_url?'تم حفظ صورة الخلفية بنجاح.':'تمت إزالة صورة الخلفية.';
+ await loadData();
 });
 async function editProduct(id){
  const p=products.find(x=>x.id===id);if(!p)return;
