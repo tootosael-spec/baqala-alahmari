@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v4-offer-style-20261116';
+const CACHE_NAME='baqala-pwa-v5-red-triangle-offer-20261116';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
