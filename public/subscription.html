@@ -73,7 +73,7 @@
   
   }catch(err){console.error('Subscription page startup failed:',err);loading.innerHTML='<b>تعذر تشغيل صفحة الاشتراك.</b><p class="muted">'+String(err.message||err)+'</p><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>';}
  }
- load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.js',()=>load('https://unpkg.com/@supabase/supabase-js@2.57.0/dist/umd/supabase.js',fail));
+ load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0',()=>load('https://unpkg.com/@supabase/supabase-js@2.57.0',fail));
 })();
 </script>
 </body></html>
