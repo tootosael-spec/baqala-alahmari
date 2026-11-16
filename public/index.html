@@ -117,6 +117,9 @@
   @media(prefers-reduced-motion:reduce){.welcome-popup.show,.welcome-card{animation:none}}
 
   
+
+/* Keep the category rail pinned while the product list scrolls */
+#categories.categories{position:sticky!important;top:0!important;z-index:50!important;display:flex!important;overflow-x:auto!important;overflow-y:hidden!important;width:100%!important;max-width:100%!important;min-width:0!important;background:rgba(245,247,244,.98)!important}
 /* Mobile layout stability */
 html,body{width:100%;max-width:100%;overflow-x:clip}
 body{min-width:0}
