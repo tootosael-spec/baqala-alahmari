@@ -267,7 +267,7 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
  if(imageFile){
   const status=document.getElementById('imageStatus');status.textContent='جارٍ رفع الصورة...';
   const ext=(imageFile.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-  const path='products/'+crypto.randomUUID()+'.'+ext;
+  const path='products/'+category_id+'/'+crypto.randomUUID()+'.'+ext;
   const {error:uploadError}=await supabase.storage.from('product-images').upload(path,imageFile,{contentType:imageFile.type,upsert:false});
   if(uploadError){status.textContent='تعذر رفع الصورة';alert('تعذر رفع الصورة: '+uploadError.message);return;}
   image_url=supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
