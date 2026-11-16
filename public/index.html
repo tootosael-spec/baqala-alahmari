@@ -214,9 +214,22 @@ input,select,textarea{max-width:100%;min-width:0}
       <div class="panel-head"><h2>سلة مشترياتك 🛍️</h2><button class="close-btn" type="button" onclick="clearCart()" aria-label="تفريغ السلة">✕</button></div>
       <div id="cartItems"></div>
       <div class="delivery-summary"><span>🚚 قيمة التوصيل</span><strong id="deliveryFeeRow">0.00 ر.س</strong></div><div class="total-row"><span>الإجمالي شامل التوصيل</span><strong id="modalTotal">0.00 ر.س</strong></div>
-      <label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" placeholder="أي تفاصيل إضافية؟"></label>
+      <label class="field"><span>عنوان التوصيل (اختياري)</span><input id="orderAddress" maxlength="500" placeholder="اكتب عنوان التوصيل إذا رغبت"></label>
+      <label class="field"><span>ملاحظات للطلب (اختياري)</span><input id="orderNote" maxlength="1000" placeholder="أي تفاصيل إضافية؟"></label>
       <button class="send-btn" onclick="sendOrder()">إرسال الطلب عبر واتساب ↗</button>
       <p class="muted" style="text-align:center;margin:10px 0 0">سيتم فتح واتساب برسالة تحتوي تفاصيل طلبك.</p>
+    </div>
+  </div>
+
+  <div id="orderConfirmModal" class="cart-overlay" style="z-index:20" role="dialog" aria-modal="true" aria-labelledby="orderConfirmTitle">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:42px;margin-bottom:8px">🧾</div>
+      <h2 id="orderConfirmTitle" style="font-size:20px;margin:0 0 8px">تم إرسال طلبك إلى واتساب</h2>
+      <p id="orderConfirmNumber" class="muted" style="font-size:13px"></p>
+      <p style="font-size:13px;line-height:1.9;color:#59665d">بعد إرسال الرسالة في واتساب، ارجع هنا واضغط الزر لتأكيد طلبك لدى البقالة.</p>
+      <button id="confirmOrderButton" class="send-btn" type="button" onclick="confirmCurrentOrder()">تأكيد طلبي ✓</button>
+      <button type="button" class="action-btn soft-btn" style="width:100%;margin-top:9px" onclick="closeOrderConfirm()">لاحقاً</button>
+      <p id="orderConfirmMessage" class="muted" role="status" style="margin:12px 0 0"></p>
     </div>
   </div>
 
@@ -373,12 +386,76 @@ function renderCart(){const list=cartEntries();document.getElementById('cartItem
 function changeQty(key,d){cart[key]=(cart[key]||0)+d;if(cart[key]<=0)delete cart[key];persistCart();renderCart();renderCartSummary();}
 window.clearCart=function(){cart={};persistCart();document.getElementById('orderNote').value='';renderCartSummary();closeModal('cartModal');};
 window.reorderLastOrder=function(){const previous=readLastOrder();if(!previous?.items?.length){alert('لا يوجد طلب سابق محفوظ على هذا الجهاز حتى الآن.');return;}if(cartEntries().length&&!confirm('سيتم استبدال محتويات سلتك الحالية بآخر طلب محفوظ. هل تريد المتابعة؟'))return;const restored={};let skipped=0;previous.items.forEach(item=>{const product=products.find(p=>p.id===item.productId);const unit=product?.units.find(u=>u.id===item.unitId);const qty=Math.floor(Number(item.qty));if(product&&unit&&Number.isFinite(qty)&&qty>0)restored[product.id+'__'+unit.id]=(restored[product.id+'__'+unit.id]||0)+qty;else skipped++;});if(!Object.keys(restored).length){alert('منتجات طلبك السابق لم تعد متاحة حالياً.');return;}cart=restored;persistCart();renderCartSummary();renderCart();openCart();if(skipped)alert('تمت استعادة المنتجات المتاحة، وتجاوزنا '+skipped+' من المنتجات التي لم تعد متوفرة.');};
-window.sendOrder=function(){const list=cartEntries();if(!list.length){alert('السلة فارغة');return;}if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}const orderNo='BAQ-'+Date.now().toString().slice(-8);const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);const lines=list.map(x=>x.p.name+'\nالكمية: '+arabicNum(x.qty)+' '+x.u.name+'\nالسعر: '+arabicNum(x.price*x.qty)+' ريال');let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\n\nرقم الطلب: '+orderNo+'\n\n'+lines.join('\n\n')+'\n-----\nرسوم التوصيل: '+(actualDeliveryFee()===0?'مجاني':arabicNum(actualDeliveryFee())+' ريال')+'\n-----\nالإجمالي: '+arabicNum(total())+' ر.س';const note=document.getElementById('orderNote').value.trim();if(note)msg+='\n\nملاحظات: '+note;msg='*'+msg+'*';const webUrl='https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg);const androidIntent='intent://send?phone='+settings.phone+'&text='+encodeURIComponent(msg)+'#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url='+encodeURIComponent(webUrl)+';end';const target=/Android/i.test(navigator.userAgent)?androidIntent:webUrl;try{localStorage.setItem('baqala_last_order',JSON.stringify({savedAt:new Date().toISOString(),items:list.map(x=>({productId:x.p.id,unitId:x.u.id,qty:x.qty}))}));updateReorderButton();}catch(error){console.error('Could not save previous order:',error);alert('تعذر حفظ الطلب السابق على هذا الجهاز. تحقق من مساحة التخزين ثم أعد المحاولة.');return;}const wa=window.open(target,'_blank');if(!wa){window.location.href=webUrl;}storeApi('store_order_events',{}, {method:'POST',body:{}}).catch(error=>console.error('تعذر تسجيل إحصائية الطلب:',error));cart={};persistCart();document.getElementById('orderNote').value='';renderCart();renderCartSummary();closeModal('cartModal');};
+window.currentPendingConfirmation=null;
+window.showOrderConfirmation=function(order,token){
+ window.currentPendingConfirmation={id:order.id,token,orderNumber:order.order_number};
+ try{localStorage.setItem('baqala_pending_confirmation',JSON.stringify(window.currentPendingConfirmation));}catch(error){console.warn('Could not persist confirmation token:',error);}
+ document.getElementById('orderConfirmNumber').textContent='رقم الطلب: '+order.order_number;
+ document.getElementById('orderConfirmMessage').textContent='';
+ document.getElementById('confirmOrderButton').disabled=false;
+ document.getElementById('confirmOrderButton').textContent='تأكيد طلبي ✓';
+ document.getElementById('orderConfirmModal').style.display='block';
+};
+window.closeOrderConfirm=function(){document.getElementById('orderConfirmModal').style.display='none';};
+window.confirmCurrentOrder=async function(){
+ const pending=window.currentPendingConfirmation;
+ if(!pending){alert('لا يوجد طلب بانتظار التأكيد.');return;}
+ const button=document.getElementById('confirmOrderButton'),message=document.getElementById('orderConfirmMessage');
+ button.disabled=true;button.textContent='جارٍ تأكيد الطلب...';message.textContent='';
+ try{
+  const result=await storeApi('rpc/confirm_store_order',{}, {method:'POST',body:{p_order_id:pending.id,p_confirmation_token:pending.token}});
+  if(result!==true)throw new Error('تعذر تأكيد الطلب. قد يكون مؤكداً مسبقاً أو انتهت صلاحية التأكيد.');
+  message.textContent='تم تأكيد طلبك بنجاح. شكراً لك 🌿';
+  button.textContent='تم التأكيد ✓';
+  try{localStorage.removeItem('baqala_pending_confirmation');}catch(error){}
+  window.currentPendingConfirmation=null;
+  setTimeout(()=>closeOrderConfirm(),1800);
+ }catch(error){message.textContent=error.message||'تعذر تأكيد الطلب، حاول مرة أخرى.';button.disabled=false;button.textContent='إعادة المحاولة';}
+};
+window.sendOrder=async function(){
+ const list=cartEntries();
+ if(!list.length){alert('السلة فارغة');return;}
+ if(!settings.phone){alert('رقم واتساب البقالة غير مضاف بعد');return;}
+ const wa=window.open('about:blank','_blank');
+ const token=crypto.randomUUID()+crypto.randomUUID();
+ const note=document.getElementById('orderNote').value.trim();
+ const address=document.getElementById('orderAddress').value.trim();
+ const button=document.querySelector('#cartModal .send-btn');
+ if(button){button.disabled=true;button.textContent='جارٍ تجهيز الطلب...';}
+ try{
+  const created=await storeApi('rpc/create_store_order',{}, {method:'POST',body:{
+   p_items:list.map(x=>({product_id:x.p.id,unit_id:x.u.id,quantity:x.qty})),
+   p_note:note,p_delivery_address:address,p_confirmation_token:token
+  }});
+  const order=Array.isArray(created)?created[0]:created;
+  if(!order?.id||!order?.order_number)throw new Error('لم يتم حفظ الطلب بشكل صحيح.');
+  const arabicNum=n=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(n);
+  const lines=(order.items||[]).map(x=>x.product_name+'\nالكمية: '+arabicNum(x.quantity)+' '+x.unit_name+'\nالسعر: '+arabicNum(x.line_total)+' ريال');
+  let msg='السلام عليكم 👋\nطلب جديد من '+settings.name+'\n\nرقم الطلب: '+order.order_number+'\n\n'+lines.join('\n\n')+'\n-----\nقيمة المنتجات: '+arabicNum(order.subtotal)+' ريال\nرسوم التوصيل: '+(Number(order.delivery_fee)===0?'مجاني':arabicNum(order.delivery_fee)+' ريال')+'\n-----\nالإجمالي: '+arabicNum(order.total)+' ر.س';
+  if(address)msg+='\n\nعنوان التوصيل: '+address;
+  if(note)msg+='\n\nملاحظات: '+note;
+  msg+='\n\nبعد إرسال الطلب، ارجع للمتجر واضغط «تأكيد طلبي».';
+  msg='*'+msg+'*';
+  const webUrl='https://wa.me/'+settings.phone+'?text='+encodeURIComponent(msg);
+  const androidIntent='intent://send?phone='+settings.phone+'&text='+encodeURIComponent(msg)+'#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url='+encodeURIComponent(webUrl)+';end';
+  const target=/Android/i.test(navigator.userAgent)?androidIntent:webUrl;
+  try{localStorage.setItem('baqala_last_order',JSON.stringify({savedAt:new Date().toISOString(),items:list.map(x=>({productId:x.p.id,unitId:x.u.id,qty:x.qty}))}));updateReorderButton();}catch(error){console.warn('Could not save previous order:',error);}
+  if(wa)wa.location.href=target;else window.location.href=webUrl;
+  window.showOrderConfirmation(order,token);
+  cart={};persistCart();document.getElementById('orderNote').value='';document.getElementById('orderAddress').value='';
+  renderCart();renderCartSummary();closeModal('cartModal');
+ }catch(error){
+  if(wa)wa.close();
+  console.error('Order creation failed:',error);
+  alert('تعذر حفظ الطلب: '+(error.message||'تحقق من اتصال الإنترنت ثم حاول مرة أخرى.'));
+ }finally{if(button){button.disabled=false;button.textContent='إرسال الطلب عبر واتساب ↗';}}
+};
 document.getElementById('search').addEventListener('input',renderProducts);
 document.getElementById('favoritesToggle').addEventListener('click',()=>{showFavorites=!showFavorites;renderProducts();});
 await loadStore();
 window.__BAQALA_STORE_READY__=true;
 updateReorderButton();
+try{const pending=JSON.parse(localStorage.getItem('baqala_pending_confirmation')||'null');if(pending?.id&&pending?.token){window.currentPendingConfirmation=pending;document.getElementById('orderConfirmNumber').textContent='رقم الطلب: '+(pending.orderNumber||'');document.getElementById('orderConfirmModal').style.display='block';}}catch(error){console.warn('Pending order confirmation could not be restored:',error);}
 // Store data is loaded directly from the same-origin page using native fetch; refresh the page to receive the latest catalog.
 </script>
 <!-- Store asset refresh 2026-11-16 -->
