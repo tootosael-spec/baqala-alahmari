@@ -89,14 +89,16 @@ async function loadData(){
   supabase.from('store_order_events').select('id',{count:'exact',head:true}),
   supabase.from('store_order_events').select('id',{count:'exact',head:true}).gte('created_at',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh'}).format(new Date())+'T00:00:00+03:00')
  ]);
- if(c.error) throw c.error;
+ if(c.error||p.error||u.error||s.error||ordersTotal.error||ordersToday.error) {
+  const failed=[c.error,p.error,u.error,s.error,ordersTotal.error,ordersToday.error].find(Boolean);
+  throw failed;
+ }
  categories=c.data||[];
  document.getElementById('statCats').textContent=categories.length;
  document.getElementById('pCategory').innerHTML=categories.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
  document.getElementById('categoryList').innerHTML=categories.length?categories.map(c=>'<div class="item"><div class="item-name">'+esc(c.name)+'</div><div class="actions"><button class="btn light" data-rename-category="'+c.id+'">تعديل الاسم</button><button class="btn danger" data-delete-category="'+c.id+'">حذف القسم</button></div></div>').join(''):'<p class="item-meta">لا توجد أقسام. أضف قسماً جديداً من الأعلى.</p>';
  document.querySelectorAll('[data-rename-category]').forEach(b=>b.addEventListener('click',()=>renameCategory(b.dataset.renameCategory)));
  document.querySelectorAll('[data-delete-category]').forEach(b=>b.addEventListener('click',()=>removeCategory(b.dataset.deleteCategory)));
- if(p.error||u.error||s.error) throw (p.error||u.error||s.error);
  const unitsByProduct=new Map();
  (u.data||[]).forEach(x=>{if(!unitsByProduct.has(x.product_id))unitsByProduct.set(x.product_id,[]);unitsByProduct.get(x.product_id).push(x);});
  const categoryNames=new Map(categories.map(x=>[x.id,x.name]));
@@ -118,41 +120,69 @@ async function loadData(){
  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(b.dataset.edit)));
  document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeProduct(b.dataset.delete)));
 }
+let adminSessionReady=false,enteringAdmin=false,activeAdminUserId=null;
 async function enterAdmin(session){
- const role=session?.user?.app_metadata?.role;
- if(role!=='store_admin'){await supabase.auth.signOut();showMessage('هذا الحساب غير مخوّل لإدارة المتجر. أرسل بريد الحساب للمسؤول لتفعيله.');return;}
- document.getElementById('authGate').style.display='none';document.getElementById('adminApp').style.display='block';
- try{await loadData();}catch(e){alert('تعذر تحميل بيانات الإدارة: '+e.message);}
+ const user=session?.user;
+ if(!user)return;
+ if(enteringAdmin||activeAdminUserId===user.id)return;
+ enteringAdmin=true;
+ try{
+  const role=user.app_metadata?.role;
+  if(role!=='store_admin'){
+   activeAdminUserId=null;
+   await supabase.auth.signOut();
+   showMessage('هذا الحساب غير مخوّل لإدارة المتجر. أرسل بريد الحساب للمسؤول لتفعيله.');
+   return;
+  }
+  activeAdminUserId=user.id;
+  document.getElementById('authGate').style.display='none';
+  document.getElementById('adminApp').style.display='block';
+  try{await loadData();}catch(e){
+   console.error('Admin data loading failed:',e);
+   const list=document.getElementById('productList');
+   list.innerHTML='<p class="item-meta" role="alert">تعذر تحميل بيانات الإدارة: '+esc(e.message||'خطأ غير معروف')+'. حدّث الصفحة أو حاول مرة أخرى.</p>';
+  }
+ }finally{enteringAdmin=false;}
 }
 document.getElementById('loginForm').addEventListener('submit',async e=>{
- e.preventDefault();const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
- const btn=document.getElementById('loginButton');btn.disabled=true;btn.textContent='جارٍ الدخول...';
- const {data,error}=await supabase.auth.signInWithPassword({email,password});
- btn.disabled=false;btn.textContent='دخول لوحة الإدارة';
- if(error){showMessage('تعذر تسجيل الدخول: '+error.message);return;}
- await enterAdmin(data.session);
+ e.preventDefault();
+ const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
+ const btn=document.getElementById('loginButton');
+ btn.disabled=true;btn.textContent='جارٍ الدخول...';
+ try{
+  const {data,error}=await supabase.auth.signInWithPassword({email,password});
+  if(error){showMessage('تعذر تسجيل الدخول: '+error.message);return;}
+  if(data.session)await enterAdmin(data.session);
+ }catch(error){showMessage('تعذر إكمال تسجيل الدخول. تحقق من الاتصال ثم حاول مجدداً.');console.error(error);}
+ finally{btn.disabled=false;btn.textContent='دخول لوحة الإدارة';}
 });
-let adminSessionReady=false;
 async function restoreAdminSession(){
- const {data:{session},error}=await supabase.auth.getSession();
- if(error){showMessage('تعذر استعادة جلسة الدخول: '+error.message);return;}
- if(session){await enterAdmin(session);}
- else{document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}
- adminSessionReady=true;
+ try{
+  const {data:{session},error}=await supabase.auth.getSession();
+  if(error)throw error;
+  if(session)await enterAdmin(session);
+  else{document.getElementById('adminApp').style.display='none';document.getElementById('authGate').style.display='block';}
+ }catch(error){showMessage('تعذر استعادة جلسة الدخول: '+(error.message||'تحقق من الاتصال ثم أعد المحاولة.'));}
+ finally{adminSessionReady=true;}
 }
 supabase.auth.onAuthStateChange((event,session)=>{
- if(event==='SIGNED_OUT'||!session){
+ if(event==='SIGNED_OUT'){
+  activeAdminUserId=null;
   document.getElementById('adminApp').style.display='none';
   document.getElementById('authGate').style.display='block';
   return;
  }
- if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
-  if(!adminSessionReady) return;
+ if(!session)return;
+ if((event==='SIGNED_IN'||event==='INITIAL_SESSION')&&adminSessionReady){
   queueMicrotask(()=>enterAdmin(session));
  }
 });
 await restoreAdminSession();
-document.getElementById('logoutButton').addEventListener('click',()=>supabase.auth.signOut());
+document.getElementById('logoutButton').addEventListener('click',async()=>{
+ const button=document.getElementById('logoutButton');button.disabled=true;
+ try{const {error}=await supabase.auth.signOut();if(error)showMessage('تعذر تسجيل الخروج: '+error.message);}
+ finally{button.disabled=false;}
+});
 document.getElementById('addProductForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const name=document.getElementById('pName').value.trim(),category_id=document.getElementById('pCategory').value,emoji=document.getElementById('pEmoji').value.trim()||'🛍️',imageFile=document.getElementById('pImageFile').files[0],manualImage=document.getElementById('pImage').value.trim();
@@ -172,7 +202,11 @@ document.getElementById('addProductForm').addEventListener('submit',async e=>{
  const {data:created,error}=await supabase.from('store_products').insert({name,price:units[0].price,unit:units[0].name,category_id,emoji,image_url,is_active:true}).select('id').single();
  if(error){alert('تعذر إضافة المنتج: '+error.message);return;}
  const {error:unitError}=await supabase.from('store_product_units').insert(units.map((u,i)=>({...u,product_id:created.id,sort_order:i})));
- if(unitError){alert('تم إنشاء المنتج لكن تعذر حفظ وحداته: '+unitError.message);return;}
+ if(unitError){
+  await supabase.from('store_products').delete().eq('id',created.id);
+  if(image_url&&!manualImage){const uploadedPath=image_url.split('/product-images/').pop();if(uploadedPath)await supabase.storage.from('product-images').remove([uploadedPath]);}
+  alert('تعذر حفظ وحدات المنتج، لذلك ألغينا إنشاء المنتج حتى لا يظهر ناقصاً: '+unitError.message);return;
+ }
  e.target.reset();chosenUnits=[];renderChosenUnits();syncUnitCategory();document.getElementById('imageStatus').textContent='يمكنك تصوير المنتج مباشرة أو اختيار صورة من معرض الجوال.';await loadData();
 });
 document.getElementById('headerImageFile').addEventListener('change',e=>{
@@ -249,7 +283,7 @@ async function removeCategory(id){
  const category=categories.find(c=>c.id===id);if(!category)return;
  if(!confirm('هل تريد حذف قسم "'+category.name+'"؟ المنتجات المرتبطة به لن تُحذف، لكنها ستصبح بدون قسم.'))return;
  const {error}=await supabase.from('store_categories').delete().eq('id',id);
- if(error){alert('تعذر حذف القسم: '+error.message);return;}
+ if(error){alert('تعذر حذف القسم: '+error.message+' — قد يكون القسم مرتبطاً بمدير قسم أو بسجل آخر.');return;}
  await loadData();
 }
 document.getElementById('addCategoryForm').addEventListener('submit',async e=>{
