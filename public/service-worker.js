@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v28-restore-all-category-20261117';;
+const CACHE_NAME='baqala-pwa-v29-all-category-first-20261117';;
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
