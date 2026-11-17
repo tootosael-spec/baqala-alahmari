@@ -409,12 +409,15 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
   });
  }
  const welcomeShownKey='baqala_welcome_seen_once_v2';
+ const legacyWelcomeKey='baqala_welcome_last_shown_v1';
  const hasWelcomeCookie=()=>document.cookie.split(';').some(item=>item.trim()===welcomeShownKey+'=1');
  const setWelcomeCookie=()=>{document.cookie=welcomeShownKey+'=1; Max-Age=31536000; Path=/; SameSite=Lax';};
  let shouldShowWelcome=false;
  try{
-  shouldShowWelcome=localStorage.getItem(welcomeShownKey)!=='1'&&!hasWelcomeCookie();
-  if(shouldShowWelcome)localStorage.setItem(welcomeShownKey,'1');
+  const alreadySeen=localStorage.getItem(welcomeShownKey)==='1'||!!localStorage.getItem(legacyWelcomeKey)||hasWelcomeCookie();
+  shouldShowWelcome=!alreadySeen;
+  if(alreadySeen)localStorage.setItem(welcomeShownKey,'1');
+  else localStorage.setItem(welcomeShownKey,'1');
  }catch(_){
   shouldShowWelcome=!hasWelcomeCookie();
  }
