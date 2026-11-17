@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v24-welcome-once-20261117';
+const CACHE_NAME='baqala-pwa-v25-welcome-cookie-once-20261117';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
