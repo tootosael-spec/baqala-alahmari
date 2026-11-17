@@ -399,6 +399,37 @@ async function loadStore(){
 }
 function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;showFavorites=false;updateFavoritesToggle();renderCats();renderProducts();}
+function normalizeProductPhoto(img){
+ if(!img||img.dataset.normalized==='1'||!img.naturalWidth||!img.naturalHeight)return;
+ img.dataset.normalized='1';
+ try{
+  const scale=Math.min(1,360/Math.max(img.naturalWidth,img.naturalHeight));
+  const source=document.createElement('canvas');
+  source.width=Math.max(1,Math.round(img.naturalWidth*scale));
+  source.height=Math.max(1,Math.round(img.naturalHeight*scale));
+  const ctx=source.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,source.width,source.height);
+  const pixels=ctx.getImageData(0,0,source.width,source.height).data;
+  let left=source.width,top=source.height,right=-1,bottom=-1;
+  for(let y=0;y<source.height;y++)for(let x=0;x<source.width;x++){
+   const i=(y*source.width+x)*4,r=pixels[i],g=pixels[i+1],bl=pixels[i+2],alpha=pixels[i+3];
+   if(alpha>18&&(alpha<245||r<242||g<242||bl<242)){
+    if(x<left)left=x;if(x>right)right=x;if(y<top)top=y;if(y>bottom)bottom=y;
+   }
+  }
+  if(right<left||bottom<top)return;
+  const pad=Math.max(4,Math.round(Math.max(right-left+1,bottom-top+1)*.07));
+  left=Math.max(0,left-pad);top=Math.max(0,top-pad);
+  right=Math.min(source.width-1,right+pad);bottom=Math.min(source.height-1,bottom+pad);
+  const cropW=right-left+1,cropH=bottom-top+1,out=document.createElement('canvas');
+  out.width=600;out.height=600;
+  const outCtx=out.getContext('2d');
+  outCtx.fillStyle='#fff';outCtx.fillRect(0,0,600,600);
+  const fit=Math.min(540/cropW,540/cropH),w=cropW*fit,h=cropH*fit;
+  outCtx.drawImage(source,left,top,cropW,cropH,(600-w)/2,(600-h)/2,w,h);
+  img.src=out.toDataURL('image/jpeg',.94);
+ }catch(error){console.warn('Product image auto-framing was skipped:',error);}
+}
 function renderProducts(){
  const q=document.getElementById('search').value.trim().toLowerCase();
  const list=products.filter(p=>(showFavorites?favorites.has(p.id):(active==='الكل'||p.category===active))&&p.name.toLowerCase().includes(q)).sort((a,b)=>{const offerOrder=Number(!!currentOffer(b))-Number(!!currentOffer(a));return offerOrder||String(a.name||'').localeCompare(String(b.name||''),'ar',{sensitivity:'base'});});
@@ -408,7 +439,7 @@ function renderProducts(){
  document.getElementById('products').innerHTML=list.length?list.map(p=>{
   const first=p.units.find(u=>/^(كيلو|الكيلو)$/i.test(String(u.name).trim()))||p.units[0];
   const isFavorite=favorites.has(p.id);
-  return '<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+(currentOffer(p)?'<span class="offer-badge" aria-label="عرض اليوم، خصم '+Number(currentOffer(p).discount_percent)+' بالمئة"><span class="offer-badge-text" aria-hidden="true"><small>خصم</small><b>'+Number(currentOffer(p).discount_percent).toLocaleString("ar-SA")+'٪</b></span></span>':'')+'<button class="favorite-btn '+(isFavorite?'active':'')+'" type="button" data-favorite="'+esc(p.id)+'" aria-label="'+(isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة')+'" aria-pressed="'+isFavorite+'">'+(isFavorite?'♥':'♡')+'</button></div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><label class="field"><span>اختر الوحدة</span><div class="unit-select-wrap"><select aria-label="اختر الوحدة" data-unit-select="'+esc(p.id)+'">'+p.units.map(u=>'<option value="'+esc(u.id)+'" data-price="'+u.price+'" '+(u.id===first.id?'selected':'')+'>'+unitOptionLabel(p,u)+'</option>').join('')+'</select><div class="unit-select-marquee" aria-hidden="true"><span data-unit-marquee="'+esc(p.id)+'">'+unitOptionLabel(p,first)+'</span></div></div></label><div class="product-foot"><strong class="product-price" data-unit-price="'+esc(p.id)+'">'+priceMarkup(p,first)+' / '+esc(first.name)+'</strong><div class="product-actions"><div class="qty-stepper" data-stepper="'+esc(p.id)+'"><button type="button" data-minus="'+esc(p.id)+'" aria-label="تقليل الكمية">−</button><strong data-qty="'+esc(p.id)+'">0</strong><button type="button" data-plus="'+esc(p.id)+'" aria-label="زيادة الكمية">+</button></div></div></div></article>';
+  return '<article class="product-card"><div class="product-art">'+(p.imageUrl?'<img crossorigin="anonymous" src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async" onload="normalizeProductPhoto(this)" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1">':esc(p.emoji))+(currentOffer(p)?'<span class="offer-badge" aria-label="عرض اليوم، خصم '+Number(currentOffer(p).discount_percent)+' بالمئة"><span class="offer-badge-text" aria-hidden="true"><small>خصم</small><b>'+Number(currentOffer(p).discount_percent).toLocaleString("ar-SA")+'٪</b></span></span>':'')+'<button class="favorite-btn '+(isFavorite?'active':'')+'" type="button" data-favorite="'+esc(p.id)+'" aria-label="'+(isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة')+'" aria-pressed="'+isFavorite+'">'+(isFavorite?'♥':'♡')+'</button></div><h3 class="product-name">'+esc(p.name)+'</h3><p class="product-category">'+esc(p.category)+'</p><label class="field"><span>اختر الوحدة</span><div class="unit-select-wrap"><select aria-label="اختر الوحدة" data-unit-select="'+esc(p.id)+'">'+p.units.map(u=>'<option value="'+esc(u.id)+'" data-price="'+u.price+'" '+(u.id===first.id?'selected':'')+'>'+unitOptionLabel(p,u)+'</option>').join('')+'</select><div class="unit-select-marquee" aria-hidden="true"><span data-unit-marquee="'+esc(p.id)+'">'+unitOptionLabel(p,first)+'</span></div></div></label><div class="product-foot"><strong class="product-price" data-unit-price="'+esc(p.id)+'">'+priceMarkup(p,first)+' / '+esc(first.name)+'</strong><div class="product-actions"><div class="qty-stepper" data-stepper="'+esc(p.id)+'"><button type="button" data-minus="'+esc(p.id)+'" aria-label="تقليل الكمية">−</button><strong data-qty="'+esc(p.id)+'">0</strong><button type="button" data-plus="'+esc(p.id)+'" aria-label="زيادة الكمية">+</button></div></div></div></article>';
  }).join(''):'<div class="empty-state"><div class="empty-icon">'+(showFavorites?'♡':'🔎')+'</div><strong>'+(showFavorites?'قائمة المفضلة فارغة':'ما لقينا هذا المنتج')+'</strong><div class="muted">'+(showFavorites?'اضغط على القلب في أي منتج لإضافته إلى المفضلة.':'جرّب كلمة بحث ثانية أو اختر قسماً آخر.')+'</div></div>';
  document.querySelectorAll('[data-favorite]').forEach(b=>b.addEventListener('click',()=>toggleFavorite(b.dataset.favorite)));
 
