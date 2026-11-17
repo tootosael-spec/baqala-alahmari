@@ -408,13 +408,18 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
     :'لإضافتنا: افتح قائمة Chrome ⋮ ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».';
   });
  }
- const welcomeShownKey='baqala_welcome_last_shown_v1';
+ const welcomeShownKey='baqala_welcome_seen_once_v2';
+ const hasWelcomeCookie=()=>document.cookie.split(';').some(item=>item.trim()===welcomeShownKey+'=1');
+ const setWelcomeCookie=()=>{document.cookie=welcomeShownKey+'=1; Max-Age=31536000; Path=/; SameSite=Lax';};
  let shouldShowWelcome=false;
  try{
-  shouldShowWelcome=!localStorage.getItem(welcomeShownKey);
+  shouldShowWelcome=localStorage.getItem(welcomeShownKey)!=='1'&&!hasWelcomeCookie();
   if(shouldShowWelcome)localStorage.setItem(welcomeShownKey,'1');
- }catch(_){shouldShowWelcome=true;}
+ }catch(_){
+  shouldShowWelcome=!hasWelcomeCookie();
+ }
  if(shouldShowWelcome){
+  setWelcomeCookie();
   window.setTimeout(()=>{
    popup.classList.add('show');
    popup.setAttribute('aria-hidden','false');
