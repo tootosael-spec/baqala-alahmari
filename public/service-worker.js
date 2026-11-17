@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v21-product-image-space-20261117';
+const CACHE_NAME='baqala-pwa-v22-auto-frame-product-photos-20261117';
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
