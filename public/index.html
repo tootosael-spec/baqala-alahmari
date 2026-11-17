@@ -148,6 +148,79 @@ input,select,textarea{max-width:100%;min-width:0}
 @media(max-width:420px){.products{grid-template-columns:repeat(2,minmax(0,1fr))}.product-card{min-width:0}.product-foot{gap:6px}.product-actions{gap:4px}.qty-stepper{gap:5px}.qty-stepper button{width:26px;height:28px}}
 
 
+
+/* Homepage visual refresh: design layer only; storefront data and order flow remain intact */
+.site-header{background-image:radial-gradient(circle at 12% 18%,#2c8051 0,transparent 34%),linear-gradient(135deg,#0e3928,#17643d 72%,#0d3424);border-radius:0 0 30px 30px}
+.header-inner{padding-top:20px;padding-bottom:27px}
+.brand-mark{width:48px;height:48px;display:grid;place-items:center;border-radius:16px;background:#ffffff1c;border:1px solid #ffffff35;font-size:26px}
+.brand h1{font-size:23px;letter-spacing:0}
+.brand p{font-size:12px;color:#d6eadc}
+.delivery-pill{border:1px solid #ffffff42;background:#ffffff17;border-radius:999px;padding:8px 12px;font-size:11px;font-weight:700;color:#f0fff4;white-space:nowrap}
+.hero{max-width:760px;padding:30px 0 8px}
+.hero .eyebrow{background:#ffffff1b;border-color:#ffffff36;color:#e4f6e9}
+.hero h2{font-size:clamp(28px,5vw,42px);margin:12px 0 5px}
+.hero h2 span{color:#b5ef72}
+.hero>p{margin:0;color:#e0f0e5;font-size:13px}
+.search-wrap{max-width:100%;margin-top:19px}
+.search-input{height:56px;border:0;border-radius:18px;padding-right:52px;box-shadow:0 9px 25px #09281938}
+.promo-banner{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:155px;margin:18px auto 8px;padding:20px 24px;border-radius:24px;overflow:hidden;color:#fff;background:linear-gradient(105deg,#0c5a31 0%,#167d3c 55%,#2b9b49 100%);box-shadow:0 10px 25px #164c2b18}
+.promo-banner:before{content:"";position:absolute;z-index:-1;width:230px;height:230px;left:18%;top:-130px;border-radius:50%;background:#ffffff12}
+.promo-banner:after{content:"";position:absolute;z-index:-1;width:170px;height:170px;right:34%;bottom:-125px;border-radius:50%;background:#c6e96a30}
+.promo-copy{display:flex;flex-direction:column;gap:6px;min-width:0}
+.promo-copy>span{font-size:11px;color:#d9f5dc;font-weight:700}
+.promo-copy>strong{font-size:clamp(23px,4vw,34px);line-height:1.4;letter-spacing:-.5px}
+.promo-copy>strong b{color:#f5d84d}
+.promo-copy>small{font-size:11px;color:#e5f5e8}
+.promo-art{display:flex;align-items:center;justify-content:center;gap:0;direction:ltr;min-width:42%;font-size:clamp(28px,6vw,55px);filter:drop-shadow(0 7px 8px #06261435)}
+.promo-art span{margin-left:-8px;transform:rotate(var(--tilt,0deg))}.promo-art span:nth-child(2){--tilt:-8deg}.promo-art span:nth-child(3){--tilt:7deg}.promo-art span:nth-child(4){--tilt:-6deg}.promo-art span:last-child{font-size:1.3em}
+.page-wrap{padding:0 20px}
+.category-heading{margin-top:22px}
+.categories{position:sticky;top:0;z-index:6;gap:10px;padding:9px 1px 13px;background:#f5f7f4f7;border-bottom:1px solid #e4eae4}
+.category-chip{display:flex;flex:0 0 112px;min-height:94px;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid #e2ecdf;border-radius:19px;background:linear-gradient(145deg,#f3f8ed,#e6f2df);color:#1d3426;padding:10px 8px;font-size:13px;box-shadow:0 3px 10px #14391a08}
+.category-chip:before{content:attr(data-icon);font-size:28px;line-height:1}
+.category-chip.active,.category-chip:hover{background:linear-gradient(145deg,#dff1d6,#d0eac7);border-color:#58a55d;color:#14532d;box-shadow:0 5px 14px #176b4020}
+.section-head{margin:23px 0 12px;align-items:center}
+.section-head h2{font-size:18px}
+.section-head p{font-size:11px}
+.offer-shelf{margin:14px 0 8px}
+.offer-shelf .section-head{margin-top:19px}
+.offer-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.offer-card{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid #f1e4c6;border-radius:17px;background:linear-gradient(140deg,#fffdf7,#fff8e8)}
+.offer-card img,.offer-card .offer-emoji{width:68px;height:68px;flex:0 0 68px;object-fit:contain;border-radius:12px;background:#fff}
+.offer-card .offer-emoji{display:grid;place-items:center;font-size:34px}
+.offer-card-copy{min-width:0;flex:1}
+.offer-card-copy strong{display:block;font-size:12px;line-height:1.5;color:#25382b}
+.offer-card-copy small{display:block;color:#c23c32;font-size:11px;font-weight:800;margin-top:3px}
+.offer-card button{border:0;border-radius:10px;background:#176b40;color:#fff;padding:8px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+.products-heading{margin-top:25px}
+#products.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#products .product-card{min-width:0;padding:9px;border:1px solid #e7ece7;border-radius:19px;background:#fff;overflow:hidden;box-shadow:0 4px 14px #1027190a}
+#products .product-art{height:176px;min-height:176px;margin:0 0 9px;border-radius:14px;background:linear-gradient(145deg,#fff,#f5f8f4)}
+#products .product-art img{object-fit:contain!important;padding:8px!important;transform:none!important}
+#products .product-name{font-size:13px;line-height:1.45;margin:0 0 3px;min-height:0}
+#products .product-category{font-size:10px;margin:0 0 7px}
+#products .product-card>.field{display:flex;align-items:center;gap:6px;margin:0 0 7px;padding:5px 7px;border-radius:9px;background:#f0f1ef}
+#products .product-card>.field>span{font-size:10px;white-space:nowrap;margin:0;color:#5c665f}
+#products .unit-select-wrap{height:34px;flex:1;min-width:0;border:0;background:#fff}
+#products .unit-select-wrap select{height:34px}
+#products .unit-select-marquee{height:34px;font-size:11px}
+#products .product-foot{display:flex;flex-direction:column;align-items:stretch;gap:7px;margin:0}
+#products .product-price{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:4px;color:#176b40;font-size:13px;text-align:center;background:#eef5ec;border-radius:9px;padding:6px}
+#products .product-actions{width:100%;justify-content:center}
+#products .qty-stepper{width:100%;justify-content:space-between;border-radius:999px;background:#eaf5ed;padding:3px 5px}
+#products .qty-stepper button{width:31px;height:31px;border-radius:50%;background:#238653;color:white;font-size:19px}
+#products .qty-stepper strong{font-size:14px}
+.trust-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:22px 0 28px;padding:14px 10px;border:1px solid #dcebd9;border-radius:19px;background:linear-gradient(110deg,#edf6e8,#f7faef);color:#174d30}
+.trust-strip span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;min-width:0}
+.trust-strip span+span{border-right:1px solid #c8ddc5}
+.trust-strip b{font-size:25px}.trust-strip strong{font-size:11px}.trust-strip small{font-size:9px;color:#718273;line-height:1.5}
+.customer-help-actions{margin:12px auto 25px}
+.customer-help-actions button{background:#fff;border-color:#d9e9d9;color:#176b40}
+.cart-dock{box-shadow:0 -5px 20px #153d2510}
+@media(max-width:420px){.header-inner{padding:16px 15px 24px}.brand-mark{width:43px;height:43px}.brand h1{font-size:18px}.delivery-pill{font-size:10px;padding:7px 9px}.hero{padding-top:24px}.hero h2{font-size:27px}.promo-banner{min-height:128px;margin:14px 15px 6px;padding:15px 14px;border-radius:20px}.promo-art{min-width:40%;font-size:30px}.promo-copy>strong{font-size:23px}.promo-copy>small{font-size:9px}.page-wrap{padding:0 15px}.category-chip{flex-basis:94px;min-height:84px;font-size:12px}.category-chip:before{font-size:25px}.offer-products{gap:8px}.offer-card{padding:7px;gap:7px}.offer-card img,.offer-card .offer-emoji{width:54px;height:54px;flex-basis:54px}.offer-card .offer-emoji{font-size:28px}.offer-card-copy strong{font-size:10px}.offer-card button{padding:7px 8px;font-size:10px}#products.products{gap:9px}#products .product-card{padding:7px;border-radius:16px}#products .product-art{height:154px;min-height:154px}#products .product-name{font-size:12px}#products .product-price{font-size:12px}.trust-strip{padding:11px 6px;gap:4px}.trust-strip strong{font-size:10px}.trust-strip small{font-size:8px}}
+@media(min-width:620px){.promo-banner{min-height:190px;padding:28px 38px}.promo-art{font-size:66px}.category-chip{flex-basis:140px;min-height:112px}#products .product-art{height:220px;min-height:220px}.offer-products{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:900px){.promo-banner{max-width:1140px}.offer-products{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 </style>
 
 <meta name="mobile-web-app-capable" content="yes">
@@ -175,13 +248,15 @@ input,select,textarea{max-width:100%;min-width:0}
     <div class="header-inner">
       <div class="nav-line">
         <div class="brand">
-          
-          <div><h1 id="storeTitle">بقالة الأحمري</h1></div>
+          <span class="brand-mark" aria-hidden="true">🛒</span>
+          <div><h1 id="storeTitle">بقالة الأحمري</h1><p>كل احتياجات البيت في مكان واحد</p></div>
         </div>
+        <span class="delivery-pill">🚚 توصيل سريع</span>
       </div>
       <div class="hero">
-
-        
+        <span class="eyebrow">🌿 تسوّق أسهل، ويوم أريح</span>
+        <h2>كل احتياجات البيت <span>في مكان واحد</span></h2>
+        <p>اختَر اللي تحتاجه، وحدد الكمية، واطلب بكل سهولة</p>
         <div class="search-wrap">
           <span class="search-icon">⌕</span>
           <input id="search" class="search-input" type="search" placeholder="وش تحتاج اليوم؟ ابحث عن منتج..." oninput="renderProducts()">
@@ -189,21 +264,31 @@ input,select,textarea{max-width:100%;min-width:0}
       </div>
     </div>
   </header>
+  <section class="promo-banner page-wrap" aria-label="تسوق أسهل ويوم أريح">
+    <div class="promo-copy"><span>🌿 اختيارات طازجة كل يوم</span><strong>تسوّق أسهل،<br><b>ويوم أريح</b></strong><small>احتياجاتك اليومية صارت أقرب لك</small></div>
+    <div class="promo-art" aria-hidden="true"><span>🥬</span><span>🍅</span><span>🥖</span><span>🥛</span><span>🛒</span></div>
+  </section>
 
   <main class="page-wrap">
     <section>
-      <div class="section-head">
-        <div><h2>تسوّق حسب القسم</h2><p>اختر القسم للوصول لاحتياجك بسرعة</p></div>
+      <div class="section-head category-heading">
+        <div><h2>تسوّق حسب القسم</h2><p>اختَر القسم اللي تحتاجه</p></div>
       </div>
-      <div id="categories" class="categories" aria-label="التنقل بين أقسام المنتجات" style="position:sticky;top:0;z-index:2"></div>
-    <div class="section-head">
+      <div id="categories" class="categories" aria-label="التنقل بين أقسام المنتجات"></div>
+      <section id="offerShelf" class="offer-shelf" hidden aria-label="عروضنا المميزة">
+        <div class="section-head"><div><h2>⭐ عروضنا المميزة</h2><p>وفّر أكثر مع عروض بقالة الأحمري</p></div></div>
+        <div id="offerProducts" class="offer-products"></div>
+      </section>
+      <div class="section-head products-heading">
         <div><h2 id="productsHeading">منتجاتنا</h2><p id="productCount">منتجات مختارة لك</p></div>
         <button id="favoritesToggle" class="favorites-toggle" type="button" aria-pressed="false">♡ المفضلة</button>
       </div>
       <div id="products" class="products"></div>
     </section>
     <div class="trust-strip">
-      <span>✓ طلب سهل وسريع</span><span>✓ تواصل مباشر عبر واتساب</span><span>✓ أسعار واضحة قبل الإرسال</span>
+      <span><b>🚚</b><strong>رسوم توصيل 3 ريال فقط</strong><small>مجاني للطلبات فوق 30 ريال</small></span>
+      <span><b>⏱️</b><strong>خدمة سريعة</strong><small>لخدمتكم دائماً</small></span>
+      <span><b>🛡️</b><strong>جودة عالية</strong><small>لرضاكم غايتنا</small></span>
     </div>
   </main>
 
@@ -397,7 +482,8 @@ async function loadStore(){
   saveStoreCache();
  }).catch(error=>console.warn('Product offers could not be loaded:',error));
 }
-function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
+function categoryIcon(name){if(name==='الكل')return '▦';if(/خضار/.test(name))return '🥬';if(/مخبز/.test(name))return '🥖';if(/تموين/.test(name))return '🛒';if(/ألبان|حليب/.test(name))return '🥛';if(/مشروبات/.test(name))return '🧃';return '🛍️';}
+function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'" data-icon="'+categoryIcon(c)+'"><span>'+esc(c)+'</span></button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;showFavorites=false;updateFavoritesToggle();renderCats();renderProducts();}
 function normalizeProductPhoto(img){
  if(!img||img.dataset.normalized==='1'||!img.naturalWidth||!img.naturalHeight)return;
@@ -430,7 +516,9 @@ function normalizeProductPhoto(img){
   img.src=out.toDataURL('image/jpeg',.94);
  }catch(error){console.warn('Product image auto-framing was skipped:',error);}
 }
+function renderOfferShelf(){const shelf=document.getElementById('offerShelf'),target=document.getElementById('offerProducts');if(!shelf||!target)return;const featured=products.filter(p=>currentOffer(p)).slice(0,8);shelf.hidden=!featured.length;target.innerHTML=featured.map(p=>{const u=p.units.find(x=>/^(كيلو|الكيلو)$/i.test(String(x.name).trim()))||p.units[0];const image=p.imageUrl?'<img src="'+esc(p.imageUrl)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async">':'<span class="offer-emoji">'+esc(p.emoji||'🛍️')+'</span>';return '<article class="offer-card">'+image+'<div class="offer-card-copy"><strong>'+esc(p.name)+'</strong><small>خصم '+Number(currentOffer(p).discount_percent).toLocaleString('ar-SA')+'٪ · '+money(unitPrice(p,u))+'</small></div><button type="button" data-offer-add="'+esc(p.id)+'">أضف +</button></article>';}).join('');target.querySelectorAll('[data-offer-add]').forEach(button=>button.addEventListener('click',()=>{const p=products.find(item=>item.id===button.dataset.offerAdd);const u=p?.units.find(x=>/^(كيلو|الكيلو)$/i.test(String(x.name).trim()))||p?.units[0];if(p&&u)addCart(p.id,u.id);}));}
 function renderProducts(){
+ renderOfferShelf();
  const q=document.getElementById('search').value.trim().toLowerCase();
  const list=products.filter(p=>(showFavorites?favorites.has(p.id):(active==='__all__'||active==='الكل'||p.category===active))&&p.name.toLowerCase().includes(q)).sort((a,b)=>{const offerOrder=Number(!!currentOffer(b))-Number(!!currentOffer(a));return offerOrder||String(a.name||'').localeCompare(String(b.name||''),'ar',{sensitivity:'base'});});
  document.getElementById('productsHeading').textContent=showFavorites?'منتجاتي المفضلة':'منتجاتنا';
