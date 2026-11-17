@@ -221,6 +221,80 @@ input,select,textarea{max-width:100%;min-width:0}
 @media(min-width:620px){.promo-banner{min-height:190px;padding:28px 38px}.promo-art{font-size:66px}.category-chip{flex-basis:140px;min-height:112px}#products .product-art{height:220px;min-height:220px}.offer-products{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:900px){.promo-banner{max-width:1140px}.offer-products{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+
+/* Reference-inspired storefront composition: visual-only, preserves live product/order data */
+:root{--forest:#063c2a;--leaf:#159447;--mint:#eaf5e9;--ink:#14291d}
+body{background:linear-gradient(180deg,#f8faf6 0%,#eef4ec 100%)}
+.site-header{background:linear-gradient(125deg,#073c29 0%,#0e6840 62%,#1a8b4c 100%);border-radius:0 0 34px 34px;box-shadow:0 12px 32px #123d2b20}
+.header-inner{padding-top:22px;padding-bottom:30px}
+.brand-mark{width:54px;height:54px;border-radius:17px;background:#fff;color:#0d6639;border:2px solid #d7f0dd;box-shadow:0 7px 18px #001b0d30;font-size:29px}
+.brand h1{font-size:clamp(21px,3vw,27px);font-weight:800}
+.brand p{font-size:13px;color:#e1f4e5}
+.delivery-pill{background:#ffffff22;border:1px solid #ffffff65;padding:9px 15px}
+.hero{max-width:760px;padding:35px 0 10px;margin-right:auto;text-align:right}
+.hero .eyebrow{background:#ffffff20;border:1px solid #ffffff55;color:#f2fff3;padding:8px 14px;font-size:13px}
+.hero h2{font-size:clamp(30px,5.4vw,46px);line-height:1.3;margin:15px 0 8px;text-shadow:0 3px 18px #001b0d35}
+.hero h2 span{color:#d5f16a}
+.hero>p{font-size:15px;color:#eff9ef}
+.search-wrap{max-width:680px;margin-top:22px}
+.search-input{height:60px;border-radius:20px;padding-right:55px;font-size:15px;box-shadow:0 12px 28px #052b1838}
+.promo-banner{min-height:205px;margin-top:22px;margin-bottom:14px;padding:25px 32px;border:1px solid #dcebd9;border-radius:28px;color:#123d2b;background:linear-gradient(110deg,#f4faef 0%,#fff 52%,#e7f4df 100%);box-shadow:0 13px 32px #153d2516}
+.promo-banner:before{width:270px;height:270px;left:5%;top:-160px;background:#9bcf7a38}
+.promo-banner:after{right:32%;bottom:-135px;background:#8bcf6c35}
+.promo-copy>span{color:#21834a;font-size:13px}
+.promo-copy>strong{font-size:clamp(27px,4.3vw,39px);color:#063c2a;line-height:1.35}
+.promo-copy>strong b{color:#e2a900}
+.promo-copy>small{font-size:13px;color:#55715d}
+.promo-art{font-size:clamp(42px,7vw,76px);min-width:40%;filter:drop-shadow(0 8px 10px #17452725)}
+.promo-art span{margin-left:-5px}
+.category-heading{margin-top:25px}
+.category-heading .section-head h2,.products-heading h2{font-size:21px;color:#123d2b}
+.categories{padding:13px 4px 16px;background:#f5f9f2f5;border:1px solid #e1ecdc;border-radius:22px;box-shadow:0 5px 18px #123d2b0b}
+.category-chip{flex-basis:112px;min-height:100px;border-radius:21px;background:linear-gradient(145deg,#fff,#eaf5e7);border:1px solid #d8e8d4;box-shadow:0 6px 15px #1b51200d}
+.category-chip:before{font-size:31px}
+.category-chip.active,.category-chip:hover{background:linear-gradient(145deg,#d9f0d5,#c6e9c1);border-color:#58a55d;color:#0b542e}
+.section-head{margin-top:27px}
+.offer-shelf{padding:3px 0 8px}
+.offer-card{background:linear-gradient(145deg,#fffef9,#fff4d9);border-color:#f0dfb5;box-shadow:0 5px 16px #6d4a1110}
+#products.products{gap:13px}
+#products .product-card{border:1px solid #e2ebdf;border-radius:22px;padding:10px;background:linear-gradient(180deg,#fff 0%,#fcfefb 100%);box-shadow:0 8px 22px #14391a0c}
+#products .product-art{height:190px;min-height:190px;border-radius:17px;background:radial-gradient(circle at 50% 35%,#fff 0%,#f2f8ee 72%,#eaf3e6 100%);margin-bottom:11px}
+#products .product-art img{padding:5px!important}
+#products .product-name{font-size:14px;color:#1b3424}
+#products .product-price{background:#edf7e9;color:#116238;border:1px solid #e0efdc;border-radius:12px;padding:8px}
+#products .add-btn{background:linear-gradient(135deg,#0b6538,#1c9a50);color:#fff;border-radius:13px;padding:10px 14px;box-shadow:0 5px 12px #126b3b20}
+#products .qty-stepper{background:#e6f4e5;border:1px solid #cfe7ce}
+.trust-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:17px 10px;border:1px solid #d7e8d2;border-radius:22px;background:linear-gradient(110deg,#f4faef,#fff);box-shadow:0 8px 22px #153d2510}
+.trust-strip span{padding:4px 8px}
+.trust-strip span+span{border-right:1px solid #d6e5d2}
+.trust-strip b{font-size:29px}
+.trust-strip strong{font-size:12px;color:#174d30}
+.trust-strip small{font-size:10px}
+.customer-help-actions button{border-radius:15px;padding:13px 18px;box-shadow:0 5px 14px #153d2510}
+.cart-dock{background:#fffffff2;border-top:1px solid #dce9dc;box-shadow:0 -8px 25px #123d2b12;padding-top:14px}
+.cart-open{background:linear-gradient(120deg,#063c2a,#159447);border-radius:17px}
+@media(max-width:620px){
+ .header-inner{padding:17px 16px 25px}
+ .brand-mark{width:47px;height:47px;font-size:25px}
+ .brand h1{font-size:19px}
+ .hero{padding:26px 0 8px}
+ .hero h2{font-size:29px}
+ .promo-banner{min-height:150px;padding:17px 15px;border-radius:22px;margin:15px 15px 8px}
+ .promo-copy>strong{font-size:24px}
+ .promo-copy>small{font-size:10px}
+ .promo-art{font-size:35px;min-width:38%}
+ .categories{border-radius:18px;padding:10px 4px 12px}
+ .category-chip{flex-basis:91px;min-height:88px;border-radius:17px}
+ #products .product-art{height:158px;min-height:158px}
+ #products .product-card{padding:8px}
+ .trust-strip{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:13px;padding:13px 8px}
+ .trust-strip span:nth-child(3){border-right:0}
+ .trust-strip span:nth-child(3),.trust-strip span:nth-child(4){border-top:1px solid #d6e5d2;padding-top:12px}
+ .trust-strip strong{font-size:11px}
+ .trust-strip small{font-size:9px}
+}
+@media(min-width:900px){.promo-banner{min-height:230px}.category-chip{flex-basis:145px;min-height:116px}#products .product-art{height:230px;min-height:230px}}
+
 </style>
 
 <meta name="mobile-web-app-capable" content="yes">
@@ -286,9 +360,10 @@ input,select,textarea{max-width:100%;min-width:0}
       <div id="products" class="products"></div>
     </section>
     <div class="trust-strip">
-      <span><b>🚚</b><strong>رسوم توصيل 3 ريال فقط</strong><small>مجاني للطلبات فوق 30 ريال</small></span>
-      <span><b>⏱️</b><strong>خدمة سريعة</strong><small>لخدمتكم دائماً</small></span>
-      <span><b>🛡️</b><strong>جودة عالية</strong><small>لرضاكم غايتنا</small></span>
+      <span><b>🚚</b><strong>توصيل سريع</strong><small>رسوم 3 ريال فقط ومجاناً فوق 30 ريال</small></span>
+      <span><b>🥬</b><strong>منتجات طازجة</strong><small>اختيارات يومية لبيتك</small></span>
+      <span><b>🛡️</b><strong>جودة مضمونة</strong><small>نهتم برضاكم</small></span>
+      <span><b>💬</b><strong>سهولة الطلب</strong><small>اطلب مباشرة عبر واتساب</small></span>
     </div>
   </main>
 
