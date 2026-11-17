@@ -397,7 +397,7 @@ async function loadStore(){
   saveStoreCache();
  }).catch(error=>console.warn('Product offers could not be loaded:',error));
 }
-function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=[...ordered.map(c=>c.name),'الكل'];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
+function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=['الكل',...ordered.map(c=>c.name)];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;showFavorites=false;updateFavoritesToggle();renderCats();renderProducts();}
 function normalizeProductPhoto(img){
  if(!img||img.dataset.normalized==='1'||!img.naturalWidth||!img.naturalHeight)return;
