@@ -1,4 +1,4 @@
-const CACHE_NAME='baqala-pwa-v26-category-last-welcome-once-20261117';
+const CACHE_NAME='baqala-pwa-v27-remove-all-category-20261117';;
 const APP_SHELL=['/','/index.html','/admin.html','/manifest.webmanifest','/icons/icon.svg'];
 
 self.addEventListener('install',event=>{
