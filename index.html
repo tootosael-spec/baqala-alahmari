@@ -408,12 +408,21 @@ supabase.channel('store-live-updates').on('postgres_changes',{event:'*',schema:'
     :'لإضافتنا: افتح قائمة Chrome ⋮ ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».';
   });
  }
- window.setTimeout(()=>{
-  popup.classList.add('show');
-  popup.setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
-  document.getElementById('welcomeShop').focus();
- },650);
+ const welcomeShownKey='baqala_welcome_last_shown_v1';
+ let shouldShowWelcome=true;
+ try{
+  const lastShown=Number(localStorage.getItem(welcomeShownKey)||0);
+  shouldShowWelcome=!lastShown||Date.now()-lastShown>=24*60*60*1000;
+ }catch(_){}
+ if(shouldShowWelcome){
+  window.setTimeout(()=>{
+   try{localStorage.setItem(welcomeShownKey,String(Date.now()));}catch(_){}
+   popup.classList.add('show');
+   popup.setAttribute('aria-hidden','false');
+   document.body.style.overflow='hidden';
+   document.getElementById('welcomeShop').focus();
+  },650);
+ }
  document.getElementById('welcomeClose').addEventListener('click',close);
  document.getElementById('welcomeShop').addEventListener('click',()=>{
   close();
