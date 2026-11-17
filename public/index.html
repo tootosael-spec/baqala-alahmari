@@ -304,7 +304,7 @@ async function storeApi(table,params={},options={}){
   return data;
  }finally{clearTimeout(timeout);}
 }
-let products=[],categories=[],settings={name:'بقالة الأحمري',phone:'',deliveryFee:0,freeDeliveryThreshold:30,headerImageUrl:''},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='الكل';
+let products=[],categories=[],settings={name:'بقالة الأحمري',phone:'',deliveryFee:0,freeDeliveryThreshold:30,headerImageUrl:''},cart=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_cart')||'{}');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(error){console.warn('Saved cart was unreadable; starting with an empty cart.',error);return {};}})(),active='__all__';
 let favorites=(()=>{try{const saved=JSON.parse(localStorage.getItem('baqala_favorites')||'[]');return new Set(Array.isArray(saved)?saved.filter(x=>typeof x==='string'):[]);}catch(error){console.warn('Saved favorites were unreadable:',error);return new Set();}})(),showFavorites=false;
 function isOrderAcceptanceOpen(){
  const start=settings.orderStart,end=settings.orderEnd;
@@ -397,7 +397,7 @@ async function loadStore(){
   saveStoreCache();
  }).catch(error=>console.warn('Product offers could not be loaded:',error));
 }
-function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=[...ordered.map(c=>c.name),'الكل'];document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
+function renderCats(){const counts=new Map();products.forEach(p=>counts.set(p.category_id,(counts.get(p.category_id)||0)+1));const ordered=[...categories].sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)||Number(a.sort_order||0)-Number(b.sort_order||0));const names=ordered.map(c=>c.name);document.getElementById('categories').innerHTML=names.map(c=>'<button class="category-chip '+(active===c?'active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');document.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.cat)));}
 function setCategory(c){active=c;showFavorites=false;updateFavoritesToggle();renderCats();renderProducts();}
 function normalizeProductPhoto(img){
  if(!img||img.dataset.normalized==='1'||!img.naturalWidth||!img.naturalHeight)return;
@@ -432,7 +432,7 @@ function normalizeProductPhoto(img){
 }
 function renderProducts(){
  const q=document.getElementById('search').value.trim().toLowerCase();
- const list=products.filter(p=>(showFavorites?favorites.has(p.id):(active==='الكل'||p.category===active))&&p.name.toLowerCase().includes(q)).sort((a,b)=>{const offerOrder=Number(!!currentOffer(b))-Number(!!currentOffer(a));return offerOrder||String(a.name||'').localeCompare(String(b.name||''),'ar',{sensitivity:'base'});});
+ const list=products.filter(p=>(showFavorites?favorites.has(p.id):(active==='__all__'||p.category===active))&&p.name.toLowerCase().includes(q)).sort((a,b)=>{const offerOrder=Number(!!currentOffer(b))-Number(!!currentOffer(a));return offerOrder||String(a.name||'').localeCompare(String(b.name||''),'ar',{sensitivity:'base'});});
  document.getElementById('productsHeading').textContent=showFavorites?'منتجاتي المفضلة':'منتجاتنا';
  document.getElementById('productCount').textContent=list.length+' منتج';
  updateFavoritesToggle();
